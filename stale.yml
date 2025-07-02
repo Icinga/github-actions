@@ -6,6 +6,6 @@ on:
       - main
 
 jobs:
-  update:
+  stale:
     uses: icinga/github-actions/.github/workflows/stale.yml@main
     secrets: inherit
