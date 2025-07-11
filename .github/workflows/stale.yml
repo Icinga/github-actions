@@ -1,7 +1,7 @@
 # Stale Action
 
-#This action automatically closes old issues to maintain repository cleanup
-#Exemptions: Issues with milestones or labels 'ref/IP', 'ref/NP' are skipped.
+# This action automatically closes old issues to maintain repository cleanup
+# Exemptions: Issues with milestones or labels 'ref/IP', 'ref/NP' are skipped.
 # days-before-issue-stale: Days until issue gets 'stale' label
 # days-before-issue-close: 0: Issues are closed immediately after being labeled stale
 # operations-per-run: 15: Max ~5 issues processed per run (3 operations each)
@@ -36,4 +36,3 @@ jobs:
           ignore-issue-updates: true
           ascending: true
           debug-only: true
-          
