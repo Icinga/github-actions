@@ -27,7 +27,7 @@ jobs:
         with:
           close-issue-message: 'This issue has been automatically closed due to age/inactivity. If still relevant with current software version, feel free to create a new issue with updated details. '
           stale-issue-label: 'stale'
-          exempt-issue-labels: 'ref/IP, ref/NP'
+          exempt-issue-labels: 'ref/IP, ref/NC'
           exempt-all-issue-milestones: true
           days-before-issue-stale: 1780
           days-before-issue-close: 0
