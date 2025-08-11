@@ -1,14 +1,26 @@
 # Stale Action
 
 # This action automatically closes old issues to maintain repository cleanup
-# Exemptions: Issues with milestones or labels 'ref/IP', 'ref/NP' are skipped.
-# days-before-issue-stale: Days until issue gets 'stale' label
+# Cron runs the job at 13:00 German local time (CET/CEST)
+# GitHub Actions cron uses UTC, so the time is set to 11:00 UTC.
+# Exemptions: Issues with milestones or labels 'ref/IP', 'ref/NC' are skipped.
+# days-before-issue-stale: Days until issue gets 'stale' label.
+# Set to 1304 days to represent 5 years of working days (Mon–Fri),
+# because the cron job only runs on weekdays.
 # days-before-issue-close: 0: Issues are closed immediately after being labeled stale
-# operations-per-run: 15: Max ~5 issues processed per run (3 operations each)
+# days-before-pr-stale: -1: disables marking pull requests as stale and overrides
+# the default (60 days)
+# days-before-pr-close: -1: Disables automatically closing pull requests after being marked stale
+# operations-per-run: 15 limits total API operations per run;
+# since each issue needs 3 operations (label, message, close),
+# max ~5 issues are processed per run.
+# The action limits operations, not issues directly, so changing config
+# (e.g., adding more labels or comments) affects how many issues can be handled in one run.
 # ascending: true: Processes oldest issues first
 # ignore-issue-updates: true: Closes issues regardless of recent activity
 # debug-only: action only simulates the labeling and closing process, useful for testing
-# Reopen: Automatically closed issues must be manually reopened if still relevant, and the 'stale' label removed to prevent reprocessing.
+# Reopen: Automatically closed issues must be manually reopened if still relevant,
+# and the 'stale' label removed to prevent reprocessing.
 
 name: 'stale'
 
@@ -17,7 +29,7 @@ permissions:
 
 on:
   schedule:
-    - cron: 0 13 * * 1-5
+    - cron: 0 11 * * 1-5
 
 jobs:
   stale:
@@ -25,12 +37,17 @@ jobs:
     steps:
       - uses: actions/stale@v9
         with:
-          close-issue-message: 'This issue has been automatically closed due to age/inactivity. If still relevant with current software version, feel free to create a new issue with updated details. '
+          close-issue-message: >
+            'This issue has been automatically closed due to age/inactivity. 
+            If still relevant with current software version, 
+            feel free to create a new issue with updated details. '
           stale-issue-label: 'stale'
           exempt-issue-labels: 'ref/IP, ref/NC'
           exempt-all-issue-milestones: true
-          days-before-issue-stale: 1780
+          days-before-issue-stale: 1304
           days-before-issue-close: 0
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
           operations-per-run: 15
           enable-statistics: true
           ignore-issue-updates: true
