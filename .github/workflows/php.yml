@@ -1,39 +1,35 @@
 # This file defines a reusable GitHub Actions workflow for PHP projects.
 # It runs linting and unit tests across multiple PHP versions, only running tests if a test directory exists.
 
-name: Jobs
-
 on:
   workflow_call:
     inputs:
-      php-version:
+      php-versions:
         required: false
         type: string
         default: '["8.2", "8.3", "8.4"]'
 
-
 jobs:
-
-  phplint:
+  lint:
     name: Lint
     strategy:
       matrix:
-        php: ${{ fromJson(inputs.php-version) }}
-    uses: icinga/github-actions/.github/workflows/phplint.yml@main
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/phplint.yml
     with:
       php-version: ${{ matrix.php }}
-    secrets: inherit
-
 
   test-exists:
     runs-on: ubuntu-latest
-    name: test-exists
+    name: Check unit tests exist
     outputs:
-      has-tests: ${{ steps.check.outputs.exists }}
-
+      exists: ${{ steps.check.outputs.exists }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: '1'
+
       - name: Check directory
         id: check
         run: |
@@ -41,18 +37,17 @@ jobs:
             echo "Test directory exists"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-          echo "Test directory does not exist"
+            echo "Test directory does not exist"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-  phpunit:
-    name: Unit Test
+  test:
+    name: Unit tests
     needs: test-exists
-    if: needs.test-exists.outputs.has-tests == 'true'
+    if: needs.test-exists.outputs.exists == 'true'
     strategy:
       matrix:
-        php: ${{ fromJson(inputs.php-version) }}
-    uses: icinga/github-actions/.github/workflows/phpstan.yml
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/phpunit.yml
     with:
       php-version: ${{ matrix.php }}
-    secrets: inherit
