@@ -18,7 +18,7 @@ jobs:
     name: Lint PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/hello-world-composite-action
+      - uses: ./.github/actions/php-baseline
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
