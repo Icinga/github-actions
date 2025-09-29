@@ -3,57 +3,29 @@ name: PHPStan
 on:
   workflow_call:
     inputs:
-      phpVersions:
-        required: false
+      php-version:
         type: string
-        default: '["8.2", "8.3", "8.4"]'
-        description: 'PHP versions to test against, JSON encoded array of strings.'
-      phpExtensions:
-        required: false
+        required: true
+        description: 'PHP versions to test against.'
+      php-extensions:
         type: string
         description: 'PHP extensions to install, comma separated list of strings.'
       dependencies:
-        required: false
         type: string
-        default: '{}'
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
 
 jobs:
   phpstan:
-    name: Static analysis with phpstan and php ${{ matrix.php }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ${{ fromJson(inputs.phpVersions) }}
-        os: ['ubuntu-latest']
-
+    name: PHPStan ${{ inputs.php-version }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code base
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: ./.github/actions/hello-world-composite-action
         with:
-          php-version: ${{ matrix.php }}
-          extensions: ${{ inputs.phpExtensions }}
+          php-version: ${{ inputs.php-version }}
+          php-extensions: ${{ inputs.php-extensions }}
+          dependencies: ${{ inputs.dependencies }}
+          php-tools: phpstan
 
-      - name: Setup dependencies
-        run: |
-          composer require -n --no-progress phpstan/phpstan
-          echo "Fetching the latest snapshot of icinga-php-library..."
-          sudo git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git /usr/share/icinga-php/ipl
-          echo "Fetching the latest snapshot of icinga-php-thirdparty..."
-          sudo git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git /usr/share/icinga-php/vendor
-          paths=`echo '${{ inputs.dependencies }}' | jq -c -r keys[]`
-          for path in $paths; do
-            url=`echo '${{ inputs.dependencies }}' | jq -r --arg path $path '.[$path]'`
-            echo "Cloning $url into $path..."
-            sudo git clone -q --depth 1 $url $path
-          done
-
-      - name: PHPStan
-        continue-on-error: true
-        if: ${{ ! cancelled() }}
-        run: ./vendor/bin/phpstan analyse
+      - name: Run PHPStan
+        run: phpstan analyse

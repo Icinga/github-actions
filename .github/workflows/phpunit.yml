@@ -4,34 +4,26 @@ on:
       php-version:
         type: string
         required: true
+        description: 'PHP versions to test against.'
+      php-extensions:
+        type: string
+        description: 'PHP extensions to install, comma separated list of strings.'
+      dependencies:
+        type: string
+        description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
 
 jobs:
   test:
     name: Unit tests PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+    steps:
+      - uses: ./.github/actions/hello-world-composite-action
         with:
           php-version: ${{ inputs.php-version }}
-          tools: phpunit
-
-      - name: Set up Icinga Web
-        run: |
-          git clone --depth 1 https://github.com/Icinga/icingaweb2.git _icingaweb2
-          ln -s `pwd` _icingaweb2/modules/icingadb
-
-      - name: Set up libraries
-        run: |
-          mkdir _libraries
-          git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git _libraries/ipl
-          git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git _libraries/vendor
+          php-extensions: ${{ inputs.php-extensions }}
+          dependencies: ${{ inputs.dependencies }}
+          php-tools: phpunit
 
       - name: PHPUnit
-        env:
-          ICINGAWEB_LIBDIR: _libraries
-        run: phpunit --bootstrap _icingaweb2/test/php/bootstrap.php
+        run: phpunit --bootstrap /usr/share/icingaweb2/test/php/bootstrap.php

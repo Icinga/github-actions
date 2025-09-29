@@ -4,10 +4,17 @@
 on:
   workflow_call:
     inputs:
-      php-versions:
-        required: false
+      php-version:
         type: string
+        description: 'PHP versions to test against, JSON encoded array of strings.'
         default: '["8.2", "8.3", "8.4"]'
+      php-extensions:
+        type: string
+        description: 'PHP extensions to install, comma separated list of strings.'
+      dependencies:
+        type: string
+        description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
 
 jobs:
   lint:
@@ -18,6 +25,7 @@ jobs:
     uses: ./.github/workflows/phplint.yml
     with:
       php-version: ${{ matrix.php }}
+      php-extensions: ${{ inputs.php-extensions }}
 
   test-exists:
     runs-on: ubuntu-latest
@@ -51,3 +59,4 @@ jobs:
     uses: ./.github/workflows/phpunit.yml
     with:
       php-version: ${{ matrix.php }}
+      php-extensions: ${{ inputs.php-extensions }}

@@ -4,35 +4,26 @@ on:
       php-version:
         type: string
         required: true
+        description: 'PHP versions to test against.'
+      php-extensions:
+        type: string
+        description: 'PHP extensions to install, comma separated list of strings.'
+      dependencies:
+        type: string
+        description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
 
 jobs:
   lint:
     name: Lint PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+      - uses: ./.github/actions/hello-world-composite-action
         with:
           php-version: ${{ inputs.php-version }}
-          tools: parallel-lint, phpcs
-
-      - name: Set up dependencies
-        run: |
-          git clone --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
-          git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php-library
-          git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php-thirdparty
-
-      - name: Install composer
-        if: hashFiles('composer.json') != ''
-        run: |
-          if [ -f composer.json ]; then
-            composer install --no-progress --prefer-dist
-          fi
+          php-extensions: ${{ inputs.php-extensions }}
+          dependencies: ${{ inputs.dependencies }}
+          php-tools: parallel-lint, phpcs
 
       - name: Lint
         run: parallel-lint --exclude vendor .
@@ -61,3 +52,4 @@ jobs:
       - name: Check Code Style
         run: |
           phpcs -wps --colors
+          #phpcs -q --report=checkstyle src | cs2pr
