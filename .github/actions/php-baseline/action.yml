@@ -40,10 +40,10 @@ runs:
       if: hashFiles('module.info') != ''
       shell: bash
       run: |
-        git clone --depth 1 https://github.com/Icinga/icingaweb2.git icingaweb2
-        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git icinga-php/ipl
-        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git icinga-php/vendor
-        #ln -s `pwd` _icingaweb2/modules/icingadb
+        git clone --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
+        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php/ipl
+        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
+        ln -s "$(pwd)" vendor/icingaweb2/modules/$(awk '/^Module:/ {print $2}' module.info)
 
     - name: Set up additional dependencies
       if: ${{ inputs.dependencies != '{}' }}

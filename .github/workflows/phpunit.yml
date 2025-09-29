@@ -28,4 +28,4 @@ jobs:
       - name: PHPUnit
         env:
           ICINGAWEB_LIBDIR: icinga-php
-        run: phpunit --bootstrap icingaweb2/test/php/bootstrap.php
+        run: phpunit --bootstrap vendor/icingaweb2/test/php/bootstrap.php
