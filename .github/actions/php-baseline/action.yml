@@ -25,7 +25,7 @@ runs:
         fetch-depth: '1'
 
     - name: Set up PHP
-      uses: shivammathur/setup-php@bf6b4fb # v2.35.5
+      uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
       with:
         php-version: ${{ inputs.php-version }}
         extensions: ${{ inputs.php-extensions }}
