@@ -18,12 +18,7 @@ jobs:
     name: Lint PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-        with:
-          fetch-depth: '1'
-
-      - uses: ./.github/actions/php-baseline
+      - uses: Icinga/github-actions/php-baseline@php-workflow
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}

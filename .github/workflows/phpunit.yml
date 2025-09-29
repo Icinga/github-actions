@@ -18,7 +18,7 @@ jobs:
     name: Unit tests PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/actions/php-baseline
+      - uses: Icinga/github-actions/php-baseline@php-workflow
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
