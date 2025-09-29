@@ -40,9 +40,9 @@ runs:
       if: hashFiles('module.info') != ''
       shell: bash
       run: |
-        git clone --depth 1 https://github.com/Icinga/icingaweb2.git /usr/share/icingaweb2
-        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git /usr/share/icinga-php/ipl
-        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git /usr/share/icinga-php/vendor
+        git clone --depth 1 https://github.com/Icinga/icingaweb2.git icingaweb2
+        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git icinga-php/ipl
+        git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git icinga-php/vendor
         #ln -s `pwd` _icingaweb2/modules/icingadb
 
     - name: Set up additional dependencies
@@ -51,5 +51,5 @@ runs:
       run: |
         echo "$json" | jq -r 'to_entries[] | "\(.key)\u0000\(.value)"' | while IFS=$'\0' read -r path url; do
           echo "Cloning $url into $path..."
-          git clone -q --depth 1 "$url" "$path"
+          git clone -q --depth 1 "$url" "./$path"
         done

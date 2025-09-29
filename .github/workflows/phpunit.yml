@@ -26,4 +26,6 @@ jobs:
           php-tools: phpunit
 
       - name: PHPUnit
-        run: phpunit --bootstrap /usr/share/icingaweb2/test/php/bootstrap.php
+        env:
+          ICINGAWEB_LIBDIR: icinga-php
+        run: phpunit --bootstrap icingaweb2/test/php/bootstrap.php
