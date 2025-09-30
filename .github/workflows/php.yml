@@ -40,7 +40,6 @@ jobs:
     with:
       php-version: ${{ matrix.php }}
       php-extensions: ${{ inputs.php-extensions }}
-      dependencies: ${{ inputs.dependencies }}
 
   stan:
     name: PHPStan
