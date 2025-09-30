@@ -39,10 +39,11 @@ runs:
       if: hashFiles('module.info') != ''
       shell: bash
       run: |
-        cp -r "$(pwd)" vendor/icingaweb2/modules/$(awk '/^Module:/ {print $2}' module.info)
         git clone --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
         git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php/ipl
         git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
+        mkdir -p test/config/enabledModules
+        ln -s "$(pwd)" test/config/enabledModules/$(awk '/^Module:/ {print $2}' module.info)
         echo "ICINGAWEB_LIBDIR=\"$(readlink -f vendor/icinga-php)\"" >> $GITHUB_ENV
         echo "PHPUNIT_BOOTSTRAP=\"$(readlink -f vendor/icingaweb2/test/php/bootstrap.php)\"" >> $GITHUB_ENV
 
