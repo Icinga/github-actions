@@ -1,0 +1,60 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Nette\Neon\Neon;
+
+if ($argc < 3) {
+    $program = basename($argv[0]);
+    fwrite(STDERR, "Usage: $program <phpstan.neon> <scan_directories_separated_by_path_separator>\n");
+    exit(1);
+}
+
+$configFile = $argv[1];
+$scanDirsRaw = $argv[2];
+
+$diff = [];
+
+$scanDirs = explode(PATH_SEPARATOR, $scanDirsRaw);
+foreach ($scanDirs as $dir) {
+    if (! is_dir($dir)) {
+        fwrite(STDERR, "Error: Directory does not exist: $dir\n");
+    } elseif (! is_readable($dir)) {
+        fwrite(STDERR, "Error: Directory not readable: $dir\n");
+    } else {
+        $diff[] = "+ $dir";
+
+        continue;
+    }
+
+    // Exit if not directory or not readable.
+    exit(1);
+}
+
+try {
+    $config = Neon::decodeFile($configFile);
+} catch (Throwable $e) {
+    fwrite(STDERR, "Error: Failed to decode NEON config: " . $e->getMessage() . "\n");
+    exit(1);
+}
+
+foreach ((array) $config['parameters']['scanDirectories'] ?? [] as $existing) {
+    if (is_dir($existing) && is_readable($existing)) {
+        $scanDirs[] = $existing;
+
+        $diff[] = "$existing (unchanged)";
+    } else {
+        $diff[] = "- $existing (not readable)";
+    }
+}
+
+$config['parameters']['scanDirectories'] = $scanDirs;
+
+$encoded = Neon::encode($config, true);
+if (file_put_contents($configFile, $encoded) === false) {
+    fwrite(STDERR, "Error: Cannot write NEON config file\n");
+    exit(1);
+}
+
+echo implode(PHP_EOL, $diff);
