@@ -48,7 +48,7 @@ runs:
 
         mkdir -p tests/modules
         ln -s "$(pwd)" tests/modules/$(awk '/^Module:/ {print $2}' module.info)
-        echo "ICINGAWEB_MODULE_DIR=$(readlink -f vendor/icingaweb2/modules):$(readlink -f tests/modules)" >> $GITHUB_ENV
+        echo "ICINGAWEB_MODULES_DIR=$(readlink -f vendor/icingaweb2/modules):$(readlink -f tests/modules)" >> $GITHUB_ENV
 
     - name: Setup additional dependencies
       if: ${{ inputs.dependencies != '{}' }}
