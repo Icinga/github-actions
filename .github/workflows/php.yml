@@ -30,3 +30,14 @@ jobs:
     uses: ./.github/workflows/phplint.yml
     with:
       php-version: ${{ matrix.php }}
+
+  test:
+    name: Unit tests
+    strategy:
+      matrix:
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/phpunit.yml
+    with:
+      php-version: ${{ matrix.php }}
+      php-extensions: ${{ inputs.php-extensions }}
+      dependencies: ${{ inputs.dependencies }}
