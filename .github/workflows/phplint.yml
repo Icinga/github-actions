@@ -18,14 +18,13 @@ jobs:
     name: Lint PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - uses: Icinga/github-actions/.github/actions/php-baseline@php-workflow
+      - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
+        name: Setup PHP and dependencies
         with:
           php-version: ${{ inputs.php-version }}
-          php-extensions: ${{ inputs.php-extensions }}
-          dependencies: ${{ inputs.dependencies }}
           php-tools: parallel-lint, phpcs
 
-      - name: Lint
+      - name: Run PHP Parallel Lint
         run: parallel-lint --exclude vendor .
 
       - name: Create phpcs.xml
@@ -49,7 +48,7 @@ jobs:
           </ruleset>
           EOF
 
-      - name: Check Code Style
+      - name: Run PHP Code Sniffer
         run: |
           phpcs -wps --colors
           #phpcs -q --report=checkstyle src | cs2pr

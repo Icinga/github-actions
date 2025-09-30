@@ -18,14 +18,18 @@ jobs:
     name: Unit tests PHP ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - uses: Icinga/github-actions/.github/actions/php-baseline@php-workflow
+      - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
+        name: Setup PHP and dependencies
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
           dependencies: ${{ inputs.dependencies }}
           php-tools: phpunit
 
-      - name: PHPUnit
-        env:
-          ICINGAWEB_LIBDIR: icinga-php
-        run: phpunit --bootstrap vendor/icingaweb2/test/php/bootstrap.php
+      - name: Run PHPUnit
+        run: |
+          if [ -n "$PHPUNIT_BOOTSTRAP" ]; then
+            phpunit --bootstrap "$PHPUNIT_BOOTSTRAP"
+          else
+            phpunit
+          fi

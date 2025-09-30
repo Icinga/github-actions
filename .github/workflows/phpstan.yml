@@ -20,7 +20,8 @@ jobs:
     name: PHPStan ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
-      - uses: Icinga/github-actions/.github/actions/php-baseline@php-workflow
+      - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
+        name: Setup PHP and dependencies
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
