@@ -36,7 +36,7 @@ runs:
       if: hashFiles('composer.json') != ''
       working-directory: ${{ inputs.working-directory }}
       shell: bash
-      run: composer install --no-progress --prefer-dist
+      run: composer install --no-progress --prefer-dist # --no-dev
 
     - name: Setup module and dependencies
       if: hashFiles('module.info') != ''

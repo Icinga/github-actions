@@ -68,7 +68,6 @@ jobs:
 
   stan:
     name: PHPStan
-    continue-on-error: true
     strategy:
       matrix:
         php: ${{ fromJson(inputs.php-versions) }}

@@ -12,11 +12,21 @@ jobs:
     outputs:
       phar: ${{ steps.phar.outputs.phar }}
     steps:
-      - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
-        name: Setup PHP and dependencies
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          fetch-depth: '1'
+          repository: Icinga/github-actions
+          ref: php-workflow
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
         with:
           php-version: 8.4
-          working-directory: ${{ inputs.working-directory }}
+
+      - name: Install Dependencies
+        run: composer install --no-progress --prefer-dist # --no-dev
 
       - name: Build PHAR
         working-directory: ${{ inputs.working-directory }}

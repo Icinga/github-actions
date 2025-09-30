@@ -26,6 +26,7 @@ jobs:
 
   phpstan:
     name: PHPStan ${{ inputs.php-version }}
+    continue-on-error: true
     needs: build-phpstan-adjust-scandirs
     runs-on: ubuntu-latest
     steps:
