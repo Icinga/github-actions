@@ -1,5 +1,5 @@
-# This file defines a reusable GitHub Actions workflow for PHP projects.
-# It runs linting and unit tests across multiple PHP versions, only running tests if a test directory exists.
+# This file defines a reusable GitHub Actions workflow for Icinga PHP modules and libraries.
+# It runs linting, unit tests and static analysis across multiple PHP versions.
 
 on:
   workflow_call:
@@ -31,32 +31,8 @@ jobs:
     with:
       php-version: ${{ matrix.php }}
 
-  test-exists:
-    runs-on: ubuntu-latest
-    name: Check unit tests exist
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: '1'
-
-      - name: Check directory
-        id: check
-        run: |
-          if [ -d "test" ]; then
-            echo "Test directory exists"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "Test directory does not exist"
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
   test:
     name: Unit tests
-    needs: test-exists
-    if: needs.test-exists.outputs.exists == 'true'
     strategy:
       matrix:
         php: ${{ fromJson(inputs.php-versions) }}

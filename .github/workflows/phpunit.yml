@@ -8,19 +8,11 @@ on:
       php-extensions:
         type: string
         description: 'PHP extensions to install, comma separated list of strings.'
-      dependencies:
-        type: string
-        description: 'Dependencies to install, JSON encoded map of path => repository url.'
-        default: '{}'
-
-# Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
-#concurrency:
-#  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
-#  cancel-in-progress: true
 
 jobs:
   test:
     name: Unit tests PHP ${{ inputs.php-version }}
+    if: hashFiles('phpunit.xml') != ''
     runs-on: ubuntu-latest
     steps:
       - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
@@ -28,8 +20,10 @@ jobs:
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
-          dependencies: ${{ inputs.dependencies }}
           php-tools: phpunit
+
+      - name: Setup problem matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Run PHPUnit
         run: |

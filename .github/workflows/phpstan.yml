@@ -12,13 +12,6 @@ on:
         type: string
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
         default: '{}'
-      phar-run-id:
-        type: string
-
-# Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
-#concurrency:
-#  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
-#  cancel-in-progress: true
 
 jobs:
   phpstan:
@@ -39,4 +32,9 @@ jobs:
         uses: Icinga/github-actions/.github/actions/phpstan-adjust-scandirs@php-workflow
 
       - name: Run PHPStan
-        run: phpstan analyse
+        run: |
+          if [ -f phpstan.neon ]; then
+            phpstan analyse
+          else
+            phpstan analyse $(find . -mindepth 1 -maxdepth 1 -type d -not -path ./vendor)
+          fi

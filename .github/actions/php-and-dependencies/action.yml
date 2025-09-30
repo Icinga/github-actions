@@ -6,14 +6,13 @@ inputs:
   php-extensions:
     type: string
     description: 'PHP extensions to install, comma separated list of strings.'
-  php-tools:
-    type: string
   dependencies:
     type: string
     description: 'Dependencies to install, JSON encoded map of path => repository url.'
     default: '{}'
+  php-tools:
+    type: string
   working-directory:
-    required: false
     type: string
     default: .
 
@@ -31,6 +30,10 @@ runs:
         php-version: ${{ inputs.php-version }}
         extensions: ${{ inputs.php-extensions }}
         tools: ${{ inputs.php-tools }}
+
+    - name: Setup problem matchers for PHP
+      shell: bash
+      run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
 
     - name: composer install
       if: hashFiles('composer.json') != ''
@@ -63,5 +66,5 @@ runs:
       run: |
         echo "$json" | jq -r 'to_entries[] | "\(.key)\u0000\(.value)"' | while IFS=$'\0' read -r path url; do
           echo "Cloning $url into $path..."
-          git clone -q --depth 1 "$url" "./$path"
+          git clone -q --depth 1 "$url" "./vendor/$path"
         done

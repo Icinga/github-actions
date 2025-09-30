@@ -5,18 +5,6 @@ on:
         type: string
         required: true
         description: 'PHP versions to test against.'
-      php-extensions:
-        type: string
-        description: 'PHP extensions to install, comma separated list of strings.'
-      dependencies:
-        type: string
-        description: 'Dependencies to install, JSON encoded map of path => repository url.'
-        default: '{}'
-
-# Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
-#concurrency:
-#  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
-#  cancel-in-progress: true
 
 jobs:
   lint:
@@ -27,10 +15,10 @@ jobs:
         name: Setup PHP and dependencies
         with:
           php-version: ${{ inputs.php-version }}
-          php-tools: parallel-lint, phpcs
+          php-tools: parallel-lint, phpcs, cs2pr
 
       - name: Run PHP Parallel Lint
-        run: parallel-lint --exclude vendor .
+        run: parallel-lint --exclude vendor --checkstyle . | cs2pr
 
       - name: Create phpcs.xml
         if: hashFiles('phpcs.xml') == ''
@@ -55,5 +43,4 @@ jobs:
 
       - name: Run PHP Code Sniffer
         run: |
-          phpcs -wps --colors
-          #phpcs -q --report=checkstyle src | cs2pr
+          phpcs -q --report=checkstyle src | cs2pr
