@@ -19,15 +19,9 @@ on:
 #  cancel-in-progress: true
 
 jobs:
-  build-phpstan-adjust-scandirs:
-    uses: ./.github/workflows/phpstan-adjust-scandirs.yml
-    with:
-      working-directory: ./phpstan-adjust-scandirs
-
   phpstan:
     name: PHPStan ${{ inputs.php-version }}
     continue-on-error: true
-    needs: build-phpstan-adjust-scandirs
     runs-on: ubuntu-latest
     steps:
       - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
@@ -38,9 +32,14 @@ jobs:
           dependencies: ${{ inputs.dependencies }}
           php-tools: phpstan
 
+      - name: Download PHAR
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: phpstan-adjust-scandirs
+
       - name: Adjust PHPStan scanDirectories
         if: hashFiles('phpstan.neon') != ''
-        run: php ${{ needs.build-phpstan-adjust-scandirs.outputs.phar }} phpstan.neon "$PHPSTAN_SCANDIRS"
+        run: php phpstan-adjust-scandirs.phar phpstan.neon "$PHPSTAN_SCANDIRS"
 
       - name: Run PHPStan
         run: phpstan analyse

@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      phar: ${{ steps.phar.outputs.phar }}
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -31,9 +29,12 @@ jobs:
 
       - name: Build PHAR
         working-directory: ${{ inputs.working-directory }}
-        id: phar
         run: |
-          composer require --dev clue/phar-composer
+          composer require --no-progress --dev clue/phar-composer
           php -d phar.readonly=0 vendor/bin/phar-composer build
-          find .
-          echo "::set-output name=phar::$(pwd)/phpstan-adjust-scandirs.phar"
+
+      - name: Upload PHAR
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phpstan-adjust-scandirs.phar
+          path: ${{ inputs.working-directory }}/phpstan-adjust-scandirs.phar

@@ -66,6 +66,11 @@ jobs:
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
 
+  phpstan-adjust-scandirs:
+    uses: ./.github/workflows/phpstan-adjust-scandirs.yml
+    with:
+      working-directory: ./phpstan-adjust-scandirs
+
   stan:
     name: PHPStan
     strategy:
