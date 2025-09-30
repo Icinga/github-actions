@@ -1,11 +1,3 @@
-inputs:
-  config:
-    type: string
-    required: true
-  scanDirs:
-    type: string
-    required: true
-
 runs:
   using: composite
   steps:
@@ -24,8 +16,4 @@ runs:
 
     - name: Adjust PHPStan scanDirectories
       shell: bash
-      run: |
-        pwd
-        find .
-        echo "${{ inputs.config }}"
-        echo "${{ inputs.scanDirs }}"
+      run: ./phpstan-adjust-scandirs/.github/actions/phpstan-adjust-scandirs/bin/phpstan-adjust-scandirs phpstan.neon "$PHPSTAN_SCANDIRS"
