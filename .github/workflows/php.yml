@@ -73,6 +73,7 @@ jobs:
 
   stan:
     name: PHPStan
+    needs: phpstan-adjust-scandirs
     strategy:
       matrix:
         php: ${{ fromJson(inputs.php-versions) }}
