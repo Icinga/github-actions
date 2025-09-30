@@ -1,6 +1,9 @@
 # This file defines a reusable GitHub Actions workflow for PHP projects.
 # It runs linting and unit tests across multiple PHP versions, only running tests if a test directory exists.
 
+name: PHP Workflow
+run-name: PHP run-name
+
 on:
   workflow_call:
     inputs:
