@@ -1,0 +1,71 @@
+# This workflow performs PHP code linting using the specified PHP version.
+# It sets up PHP, runs parallel-lint for syntax checking,
+# and uses PHP_CodeSniffer (phpcs) to enforce coding standards.
+# If no phpcs.xml config file is found, it generates a default PSR-12 ruleset for code style checks.
+# The results of parallel-lint and phpcs are formatted and processed for GitHub annotations to highlight issues.
+
+on:
+  workflow_call:
+    inputs:
+      php-version:
+        type: string
+        required: true
+        description: 'PHP version to test against.'
+      working-directory:
+        type: string
+        default: .
+
+jobs:
+  lint:
+    name: Linters ${{ inputs.php-version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: '1'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2.36.0
+        with:
+          php-version: ${{ inputs.php-version }}
+          tools: parallel-lint, phpcs, cs2pr
+
+      - name: Setup problem matchers for PHP
+        shell: bash
+        run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+
+      - name: Run PHP Parallel Lint
+        working-directory: ${{ inputs.working-directory }}
+        run: parallel-lint --exclude vendor --checkstyle . | cs2pr
+
+      - name: Create phpcs.xml
+        if: ${{ hashFiles(format('{0}/{1}', inputs.working-directory, 'phpcs.xml')) == '' }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          cat <<'EOF' >phpcs.xml
+          <?xml version="1.0"?>
+          <ruleset name="PSR12">
+              <!-- Test all PHP files except those in vendor/ -->
+              <file>./</file>
+              <arg name="extensions" value="php"/>
+              <exclude-pattern>vendor/*</exclude-pattern>
+
+              <arg name="encoding" value="UTF-8"/>
+
+              <rule ref="PSR12"/>
+              <rule ref="Generic.Formatting.SpaceAfterCast"/>
+              <rule ref="Generic.Formatting.SpaceAfterNot"/>
+          </ruleset>
+          EOF
+
+      - name: Run PHP Code Sniffer
+        working-directory: ${{ inputs.working-directory }}
+        run: phpcs -q --report-full --report-checkstyle=./phpcs-report.xml
+
+      - name: Annotate PHP Code Sniffer results
+        if: ${{ !cancelled() }}
+        # Not using working-directory as the GitHub Actions API
+        # expects file paths to be relative to the repository root.
+        # https://github.com/staabm/annotate-pull-request-from-checkstyle/blob/1.8.6/cs2pr#L154
+        run: cs2pr ${{ inputs.working-directory }}/phpcs-report.xml
