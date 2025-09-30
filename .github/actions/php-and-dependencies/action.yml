@@ -1,5 +1,3 @@
-name: Setup PHP and dependencies
-
 inputs:
   php-version:
     type: string
@@ -14,6 +12,10 @@ inputs:
     type: string
     description: 'Dependencies to install, JSON encoded map of path => repository url.'
     default: '{}'
+  working-directory:
+    required: false
+    type: string
+    default: .
 
 runs:
   using: composite
@@ -32,11 +34,13 @@ runs:
 
     - name: composer install
       if: hashFiles('composer.json') != ''
+      working-directory: ${{ inputs.working-directory }}
       shell: bash
       run: composer install --no-progress --prefer-dist
 
     - name: Setup module and dependencies
       if: hashFiles('module.info') != ''
+      working-directory: ${{ inputs.working-directory }}
       shell: bash
       run: |
         git clone --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
@@ -46,12 +50,15 @@ runs:
         git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
         echo "ICINGAWEB_LIBDIR=$(readlink -f vendor/icinga-php)" >> $GITHUB_ENV
 
+        echo "PHPSTAN_SCANDIRS=$(readlink -f vendor)" >> $GITHUB_ENV
+
         mkdir -p tests/modules
         ln -s "$(pwd)" tests/modules/$(awk '/^Module:/ {print $2}' module.info)
         echo "ICINGAWEB_MODULES_DIR=$(readlink -f vendor/icingaweb2/modules):$(readlink -f tests/modules)" >> $GITHUB_ENV
 
     - name: Setup additional dependencies
       if: ${{ inputs.dependencies != '{}' }}
+      working-directory: ${{ inputs.working-directory }}
       shell: bash
       run: |
         echo "$json" | jq -r 'to_entries[] | "\(.key)\u0000\(.value)"' | while IFS=$'\0' read -r path url; do
