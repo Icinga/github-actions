@@ -38,9 +38,9 @@ jobs:
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: phpstan-adjust-scandirs.phar
-          repository: Icinga/github-actions
-          run-id: ${{ inputs.phar-run-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          repository: Icinga/github-actions
+#          run-id: ${{ inputs.phar-run-id }}
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Adjust PHPStan scanDirectories
         if: hashFiles('phpstan.neon') != ''
