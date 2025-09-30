@@ -26,6 +26,7 @@ jobs:
           php-version: 8.4
 
       - name: Install Dependencies
+        working-directory: ${{ inputs.working-directory }}
         run: composer install --no-progress --prefer-dist # --no-dev
 
       - name: Build PHAR
