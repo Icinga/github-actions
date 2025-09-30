@@ -1,0 +1,35 @@
+inputs:
+  config:
+    type: string
+    required: true
+  scanDirs:
+    type: string
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      with:
+        fetch-depth: '1'
+        repository: Icinga/github-actions
+        ref: php-workflow
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2.35.5
+      with:
+        php-version: 8.4
+
+    - name: Install Dependencies
+      working-directory: ./.github/actions/phpstan-adjust-scandirs
+      shell: bash
+      run: composer install --no-progress --prefer-dist # --no-dev
+
+    - name: Adjust PHPStan scanDirectories
+      shell: bash
+      run: |
+        pwd
+        find .
+        echo "${{ inputs.config }}"
+        echo "${{ inputs.scanDirs }}"

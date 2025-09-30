@@ -26,8 +26,8 @@ jobs:
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
-      - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
-        name: Setup PHP and dependencies
+      - name: Setup PHP and dependencies
+        uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
@@ -44,7 +44,10 @@ jobs:
 
       - name: Adjust PHPStan scanDirectories
         if: hashFiles('phpstan.neon') != ''
-        run: php phpstan-adjust-scandirs.phar phpstan.neon "$PHPSTAN_SCANDIRS"
+        uses: Icinga/github-actions/.github/actions/phpstan-adjust-scandirs@php-workflow
+        with:
+          config: ${{ phpstan.neon }}
+          scanDirs: ${{ env.PHPSTAN_SCAN_DIRS }}
 
       - name: Run PHPStan
         run: phpstan analyse
