@@ -33,6 +33,7 @@ jobs:
 
   test:
     name: Unit tests
+    if: hashFiles('phpunit.xml') != ''
     strategy:
       matrix:
         php: ${{ fromJson(inputs.php-versions) }}

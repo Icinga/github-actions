@@ -12,7 +12,6 @@ on:
 jobs:
   test:
     name: Unit tests PHP ${{ inputs.php-version }}
-    if: hashFiles('phpunit.xml') != ''
     runs-on: ubuntu-latest
     steps:
       - uses: Icinga/github-actions/.github/actions/php-and-dependencies@php-workflow
