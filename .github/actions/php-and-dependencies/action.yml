@@ -1,0 +1,149 @@
+# This composite action sets up a PHP testing environment with configurable PHP version,
+# extensions, and tools for testing Icinga Web modules and Icinga PHP libraries.
+# For PHP libraries, it installs dependencies via composer.
+# For Icinga Web modules, it clones required Icinga repositories, and
+# sets up environment variables for testing and static analysis.
+# Additional dependencies can be cloned as specified in the inputs.
+# PHP problem matchers are added to improve error reporting in workflow logs.
+# The working directory is configurable to support different project layouts.
+
+inputs:
+  php-version:
+    type: string
+    required: true
+    description: 'PHP versions to test against, JSON encoded array of strings.'
+  php-extensions:
+    type: string
+    description: 'PHP extensions to install, comma separated list of strings.'
+  php-tools:
+    type: string
+    description: 'PHP tools to install, comma separated list of strings.'
+  dependencies:
+    type: string
+    description: 'Dependencies to install, JSON encoded map of path => repository url.'
+    default: '{}'
+  working-directory:
+    type: string
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: '1'
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2.36.0
+      with:
+        php-version: ${{ inputs.php-version }}
+        extensions: ${{ inputs.php-extensions }}
+        tools: ${{ inputs.php-tools }}
+
+    - name: Setup problem matchers for PHP
+      shell: bash
+      run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+
+    - name: composer install
+      if: ${{ hashFiles(format('{0}/{1}', inputs.working-directory, 'composer.json')) != '' }}
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: |
+        echo "::group::composer.json exists, installing dependencies"
+
+        BLUE_BOLD='\033[1;34m'
+        NC='\033[0m' # No Color
+
+        log_cmd() {
+          printf "${BLUE_BOLD}"
+          printf '%s ' "${@}"
+          printf "${NC}\n"
+        }
+
+        run_cmd() {
+          log_cmd "$@"
+          "$@"
+        }
+
+        run_cmd composer install --no-progress
+
+        echo "::endgroup::"
+
+    - name: Setup module and dependencies
+      if: ${{ hashFiles(format('{0}/{1}', inputs.working-directory, 'module.info')) != '' }}
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: |
+        echo "::group::module.info exists, installing dependencies"
+
+        BLUE_BOLD='\033[1;34m'
+        NC='\033[0m' # No Color
+
+        log_cmd() {
+          printf "${BLUE_BOLD}"
+          printf '%s ' "${@}"
+          printf "${NC}\n"
+        }
+
+        run_cmd() {
+          log_cmd "$@"
+          "$@"
+        }
+
+        set_env() {
+          local key="$1"
+          local value="$2"
+          echo "${key}=${value}"
+          echo "${key}=${value}" >> $GITHUB_ENV
+        }
+
+        run_cmd git clone -q --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
+        run_cmd composer install -d vendor/icingaweb2 --no-progress
+
+        run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php/ipl
+        run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
+        set_env ICINGAWEB_LIBDIR ./vendor/icinga-php
+
+        run_cmd mkdir -p ./vendor/tests/modules
+        run_cmd ln -s "$(pwd)" ./vendor/tests/modules/$(awk 'BEGIN {IGNORECASE=1} /^Module:/ {m=tolower($2)} /^Name:/ && !m {m=tolower($2)} END {print m}' module.info)
+        set_env ICINGAWEB_MODULES_DIR ./vendor/icingaweb2/modules:./vendor/tests/modules
+
+        echo "::endgroup::"
+
+    - name: Setup additional dependencies
+      if: ${{ inputs.dependencies != '{}' }}
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: |
+        echo "::group::Setup additional dependencies"
+
+        BLUE_BOLD='\033[1;34m'
+        NC='\033[0m' # No Color
+
+        log_cmd() {
+          printf "${BLUE_BOLD}"
+          printf '%s ' "${@}"
+          printf "${NC}\n"
+        }
+
+        run_cmd() {
+          log_cmd "$@"
+          "$@"
+        }
+
+        echo '${{ inputs.dependencies }}' | jq -r 'to_entries[] | "\(.key)\t\(.value)"' | while IFS=$'\t' read -r path url; do
+          # Extract branch if exists
+          branch="${url#*#}"
+          if [[ "${branch}" == "${url}" ]]; then
+            # No branch suffix
+            branch=""
+            run_cmd git clone -q --depth 1 "${url}" "${path}"
+          else
+            # Remove branch suffix from URL
+            url="${url%#*}"
+            run_cmd git clone -q --depth 1 -b "${branch}" "${url}" "${path}"
+          fi
+        done
+
+        echo "::endgroup::"
