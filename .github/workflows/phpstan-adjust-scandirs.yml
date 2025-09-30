@@ -33,7 +33,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         id: phar
         run: |
-          composer require phar-composer
+          composer require --dev clue/phar-composer
           php -d phar.readonly=0 vendor/bin/phar-composer build
           find .
           echo "::set-output name=phar::$(pwd)/phpstan-adjust-scandirs.phar"
