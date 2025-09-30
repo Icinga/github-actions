@@ -46,7 +46,7 @@ jobs:
         if: hashFiles('phpstan.neon') != ''
         uses: Icinga/github-actions/.github/actions/phpstan-adjust-scandirs@php-workflow
         with:
-          config: ${{ phpstan.neon }}
+          config: phpstan.neon
           scanDirs: ${{ env.PHPSTAN_SCAN_DIRS }}
 
       - name: Run PHPStan
