@@ -16,6 +16,11 @@ on:
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
         default: '{}'
 
+# Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint
