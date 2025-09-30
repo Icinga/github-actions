@@ -44,8 +44,8 @@ runs:
         git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
         mkdir -p test/config/enabledModules
         ln -s "$(pwd)" test/config/enabledModules/$(awk '/^Module:/ {print $2}' module.info)
-        echo "ICINGAWEB_LIBDIR=\"$(readlink -f vendor/icinga-php)\"" >> $GITHUB_ENV
-        echo "PHPUNIT_BOOTSTRAP=\"$(readlink -f vendor/icingaweb2/test/php/bootstrap.php)\"" >> $GITHUB_ENV
+        echo "ICINGAWEB_LIBDIR=$(readlink -f vendor/icinga-php)" >> $GITHUB_ENV
+        echo "PHPUNIT_BOOTSTRAP=$(readlink -f vendor/icingaweb2/test/php/bootstrap.php)" >> $GITHUB_ENV
 
     - name: Setup additional dependencies
       if: ${{ inputs.dependencies != '{}' }}
