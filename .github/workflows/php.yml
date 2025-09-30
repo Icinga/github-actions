@@ -81,3 +81,4 @@ jobs:
       php-version: ${{ matrix.php }}
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
+      phar-run-id: ${{ github.run_id }}

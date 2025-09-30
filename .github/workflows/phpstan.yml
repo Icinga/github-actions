@@ -12,6 +12,8 @@ on:
         type: string
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
         default: '{}'
+      phar-run-id:
+        type: string
 
 # Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
 #concurrency:
@@ -37,6 +39,7 @@ jobs:
         with:
           name: phpstan-adjust-scandirs.phar
           repository: Icinga/github-actions
+          run-id: ${{ inputs.phar-run-id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Adjust PHPStan scanDirectories
