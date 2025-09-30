@@ -17,9 +17,9 @@ on:
         default: '{}'
 
 # Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
-concurrency:
-  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+#concurrency:
+#  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+#  cancel-in-progress: true
 
 jobs:
   phpstan:
