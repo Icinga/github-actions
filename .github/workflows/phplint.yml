@@ -42,5 +42,4 @@ jobs:
           EOF
 
       - name: Run PHP Code Sniffer
-        run: |
-          phpcs -q --report=checkstyle | cs2pr
+        run: phpcs -q --report=checkstyle | cs2pr
