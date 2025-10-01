@@ -43,6 +43,7 @@ jobs:
 
   stan:
     name: PHPStan
+    if: ${{ !cancelled() }}
     strategy:
       matrix:
         php: ${{ fromJson(inputs.php-versions) }}
