@@ -1,0 +1,67 @@
+# This composite action adjusts the scanDirectories setting in a phpstan.neon configuration file to
+# flexibly configure the static analysis scope depending on the runtime environment.
+# It uses the $PHPSTAN_SCANDIRS and $PHPSTAN_EXCLUDE environment variables
+# to dynamically set the directories PHPStan scans and analyzes.
+
+inputs:
+  working-directory:
+    type: string
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: '1'
+        path: ${{ format('{0}/{1}', inputs.working-directory, 'phpstan-adjust-scandirs') }}
+        repository: Icinga/github-actions
+        ref: main
+        sparse-checkout: phpstan-adjust-scandirs
+
+    - name: Install Dependencies
+      working-directory: ${{ format('{0}/{1}', inputs.working-directory, 'phpstan-adjust-scandirs/phpstan-adjust-scandirs') }}
+      shell: bash
+      run: |
+        echo "::group::Install Dependencies"
+
+        BLUE_BOLD='\033[1;34m'
+        NC='\033[0m' # No Color
+
+        log_cmd() {
+          printf "${BLUE_BOLD}"
+          printf '%s ' "${@}"
+          printf "${NC}\n"
+        }
+
+        run_cmd() {
+          log_cmd "$@"
+          "$@"
+        }
+
+        run_cmd composer install --no-progress --no-dev
+
+        echo "::endgroup::"
+
+    - name: Adjust PHPStan scanDirectories
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: |
+        echo "::group::Adjust PHPStan scanDirectories"
+
+        BLUE_BOLD='\033[1;34m'
+        NC='\033[0m' # No Color
+
+        log_cmd() {
+          printf "${BLUE_BOLD}"
+          printf '%s ' "${@}"
+          printf "${NC}\n"
+        }
+
+        log_cmd phpstan-adjust-scandirs.php \
+          --config=phpstan.neon --scan="${PHPSTAN_SCANDIRS}" --exclude="${PHPSTAN_EXCLUDE}" --inplace
+        ./phpstan-adjust-scandirs/phpstan-adjust-scandirs/phpstan-adjust-scandirs.php \
+          --config=phpstan.neon --scan="${PHPSTAN_SCANDIRS}" --exclude="${PHPSTAN_EXCLUDE}" --inplace
+
+        echo "::endgroup::"

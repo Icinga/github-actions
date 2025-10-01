@@ -1,0 +1,85 @@
+# This workflow performs static PHP code analysis on the specified PHP version with optional PHP extensions.
+# It sets up PHP, installs code dependencies, and runs PHPStan as a static analysis tool.
+# Additional dependencies can be cloned as specified in the inputs.
+# If a phpstan.neon file is present, scanDirectories are automatically adjusted to match the runtime environment;
+# otherwise, PHPStan analyzes all main directories except vendor.
+
+on:
+  workflow_call:
+    inputs:
+      php-version:
+        type: string
+        required: true
+        description: 'PHP versions to test against.'
+      php-extensions:
+        type: string
+        description: 'PHP extensions to install, comma separated list of strings.'
+      dependencies:
+        type: string
+        description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
+      working-directory:
+        type: string
+        default: .
+
+jobs:
+  phpstan:
+    name: PHPStan ${{ inputs.php-version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP and dependencies
+        uses: Icinga/github-actions/.github/actions/php-and-dependencies@main
+        with:
+          php-version: ${{ inputs.php-version }}
+          php-extensions: ${{ inputs.php-extensions }}
+          dependencies: ${{ inputs.dependencies }}
+          working-directory: ${{ inputs.working-directory }}
+          php-tools: phpstan
+
+      - name: Adjust PHPStan scanDirectories
+        if: ${{ hashFiles(format('{0}/{1}', inputs.working-directory, 'phpstan.neon')) != '' && env.PHPSTAN_SCANDIRS != ''}}
+        uses: Icinga/github-actions/.github/actions/phpstan-adjust-scandirs@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
+      - name: Run PHPStan
+        # Not using working-directory as the GitHub Actions API
+        # expects file paths to be relative to the repository root.
+        # https://github.com/phpstan/phpstan-src/blob/2.1.33/src/Command/ErrorFormatter/GithubErrorFormatter.php#L35
+        run: |
+          echo "::group::PHPStan"
+
+          BLUE_BOLD='\033[1;34m'
+          NC='\033[0m' # No Color
+
+          log_cmd() {
+            printf "${BLUE_BOLD}"
+            printf '%s ' "${@}"
+            printf "${NC}\n"
+          }
+
+          if [ -f "${{ inputs.working-directory }}/phpstan.neon" ]; then
+            args=(--configuration "${{ inputs.working-directory }}/phpstan.neon")
+          else
+            # Find all direct child directories, excluding vendor and hidden dirs
+            dirs=($(find "${{ inputs.working-directory }}" -mindepth 1 -maxdepth 1 \
+              -type d \
+              -not -path "${{ inputs.working-directory }}/vendor" \
+              -not -path "${{ inputs.working-directory }}/.*"))
+
+            # Find all direct child PHP files
+            php_files=($(find "${{ inputs.working-directory }}" -mindepth 1 -maxdepth 1 \
+              -type f -name '*.php'))
+
+            # Surprisingly, PHPStan does not seem to find composer.json when using a custom working directory.
+            # Therefore, we will simply pass the Composer autoloader explicitly.
+            composer_vendor="$(composer -d ${{ inputs.working-directory }} config vendor-dir)"
+            autoload_file="${{ inputs.working-directory }}/${composer_vendor}/autoload.php"
+
+            args=(--level 6 -a "${autoload_file}" "${dirs[@]}" "${php_files[@]}")
+          fi
+
+          log_cmd phpstan analyse "${args[@]}"
+          phpstan analyse "${args[@]}"
+
+          echo "::endgroup::"
