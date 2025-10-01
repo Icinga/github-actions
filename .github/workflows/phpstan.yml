@@ -16,7 +16,6 @@ on:
 jobs:
   phpstan:
     name: PHPStan ${{ inputs.php-version }}
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Setup PHP and dependencies
@@ -34,9 +33,7 @@ jobs:
       - name: Run PHPStan
         run: |
           if [ -f phpstan.neon ]; then
-            phpstan analyse
+            phpstan analyse || true
           else
-            phpstan analyse $(find . -mindepth 1 -maxdepth 1 -type d -not -path ./vendor)
+            phpstan analyse $(find . -mindepth 1 -maxdepth 1 -type d -not -path ./vendor) || true
           fi
-          echo "Force exit 0"
-          exit 0
