@@ -1,0 +1,89 @@
+# This workflow runs PHP unit tests on the specified PHP version with optional PHP extensions.
+# It sets up PHP, installs code dependencies, and runs PHPUnit as a testing tool.
+# Additional dependencies can be cloned as specified in the inputs.
+# The phpunit command uses a bootstrap file if the PHPUNIT_BOOTSTRAP environment variable is set.
+# PHPUnit problem matchers are added to improve error reporting in the workflow logs.
+
+on:
+  workflow_call:
+    inputs:
+      php-version:
+        type: string
+        required: true
+        description: 'PHP versions to test against.'
+      php-extensions:
+        type: string
+        description: 'PHP extensions to install, comma separated list of strings.'
+      dependencies:
+        type: string
+        description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
+      working-directory:
+        type: string
+        default: .
+
+jobs:
+  test:
+    name: PHPUnit ${{ inputs.php-version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Icinga/github-actions/.github/actions/php-and-dependencies@main
+        name: Setup PHP and dependencies
+        with:
+          php-version: ${{ inputs.php-version }}
+          php-extensions: ${{ inputs.php-extensions }}
+          dependencies: ${{ inputs.dependencies }}
+          php-tools: phpunit:${{ inputs.phpunit-version }}
+          working-directory: ${{ inputs.working-directory }}
+
+      # Register the GitHub Actions problem matcher installed by shivammathur/setup-php.
+      # https://github.com/shivammathur/setup-php/blob/2.36.0/src/configs/pm/phpunit.json
+      - name: Setup problem matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Run PHPUnit
+        # Unlike linting and static analysis, which report errors via the GitHub Actions API and
+        # therefore (have to) use relative paths, we can use working-directory here because
+        # PHPUnit provides absolute paths and GitHub Actions problem matchers work with absolute paths.
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "::group::PHPUnit"
+
+          BLUE_BOLD='\033[1;34m'
+          NC='\033[0m' # No Color
+
+          log_cmd() {
+            printf "${BLUE_BOLD}"
+            printf '%s ' "${@}"
+            printf "${NC}\n"
+          }
+
+          run_cmd() {
+            log_cmd "$@"
+            "$@"
+          }
+
+          args=()
+          has_bootstrap=false
+          if [ -f phpunit.xml ]; then
+            # Detect if phpunit.xml defines a bootstrap attribute
+            if grep -q 'bootstrap=' phpunit.xml 2>/dev/null; then
+              has_bootstrap=true
+            fi
+          else
+            test_dirs=$(find . -mindepth 1 -maxdepth 1 -type d -path './test*')
+            if [ -z "${test_dirs}" ]; then
+              echo "No test directories found, skipping PHPUnit"
+              exit 0
+            fi
+            args=(--colors=auto --display-deprecations --display-notices --display-warnings "${test_dirs[@]}")
+          fi
+
+          # Only apply PHPUNIT_BOOTSTRAP if defined and no bootstrap in phpunit.xml
+          if [ -n "${PHPUNIT_BOOTSTRAP}" ] && [ "${has_bootstrap}" = false ]; then
+            run_cmd phpunit --bootstrap "${PHPUNIT_BOOTSTRAP}" "${args[@]}"
+          else
+            run_cmd phpunit "${args[@]}"
+          fi
+
+          echo "::endgroup::"
