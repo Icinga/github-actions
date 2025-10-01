@@ -1,0 +1,63 @@
+# This workflow orchestrates PHP linting, unit testing, and static analysis across multiple PHP versions.
+# It accepts PHP versions, extensions, and dependencies as inputs to configure each job dynamically.
+
+on:
+  workflow_call:
+    inputs:
+      php-versions:
+        type: string
+        description: 'PHP versions to test against, JSON encoded array of strings.'
+        default: '["8.2", "8.3", "8.4"]'
+      php-extensions:
+        type: string
+        description: 'PHP extensions to install, comma separated list of strings.'
+      dependencies:
+        type: string
+        description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
+      working-directory:
+        type: string
+        default: .
+
+# Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/php-lint.yml
+    with:
+      php-version: ${{ matrix.php }}
+      working-directory: ${{ inputs.working-directory }}
+
+  test:
+    name: Test
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/php-unit.yml
+    with:
+      php-version: ${{ matrix.php }}
+      php-extensions: ${{ inputs.php-extensions }}
+      dependencies: ${{ inputs.dependencies }}
+      working-directory: ${{ inputs.working-directory }}
+
+  stan:
+    name: Static analysis
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/php-sa.yml
+    with:
+      php-version: ${{ matrix.php }}
+      php-extensions: ${{ inputs.php-extensions }}
+      dependencies: ${{ inputs.dependencies }}
+      working-directory: ${{ inputs.working-directory }}
