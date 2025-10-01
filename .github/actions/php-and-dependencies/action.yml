@@ -53,7 +53,7 @@ runs:
         git clone --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
         echo "ICINGAWEB_LIBDIR=$(readlink -f vendor/icinga-php)" >> $GITHUB_ENV
 
-        echo "PHPSTAN_SCANDIRS=$(readlink -f vendor)" >> $GITHUB_ENV
+#        echo "PHPSTAN_SCANDIRS=$(readlink -f vendor)" >> $GITHUB_ENV
 
         mkdir -p tests/modules
         ln -s "$(pwd)" tests/modules/$(awk '/^Module:/ {print $2}' module.info)
