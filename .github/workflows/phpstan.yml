@@ -28,7 +28,7 @@ jobs:
           php-tools: phpstan
 
       - name: Adjust PHPStan scanDirectories
-        if: hashFiles('phpstan.neon') != ''
+        if: ${{ hashFiles('phpstan.neon') != '' && env.PHPSTAN_SCANDIRS != '' }}
         uses: Icinga/github-actions/.github/actions/phpstan-adjust-scandirs@php-workflow
 
       - name: Run PHPStan
