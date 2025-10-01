@@ -21,6 +21,10 @@ on:
       working-directory:
         type: string
         default: .
+      continue-on-error:
+        type: boolean
+        description: 'Enable PHPStan to fail gracefully. This workaround addresses the current lack of support by GitHub for continue-on-error in jobs that use reusable workflows.'
+        default: false
 
 jobs:
   phpstan:
@@ -80,6 +84,11 @@ jobs:
           fi
 
           log_cmd phpstan analyse "${args[@]}"
-          phpstan analyse "${args[@]}"
+
+          if [ "${{ inputs.continue-on-error }}" = "true" ]; then
+            phpstan analyse "${args[@]}" || true
+          else
+            phpstan analyse "${args[@]}"
+          fi
 
           echo "::endgroup::"

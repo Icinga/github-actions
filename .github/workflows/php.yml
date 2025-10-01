@@ -61,3 +61,7 @@ jobs:
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
       working-directory: ${{ inputs.working-directory }}
+      # GitHub does not yet support continue-on-error at the job level for jobs invoking reusable workflows
+      # (see https://github.com/orgs/community/discussions/77915, for example).
+      # This workaround enables the reusable workflow to handle errors internally instead.
+      continue-on-error: true
