@@ -22,6 +22,9 @@ on:
         type: string
         description: 'Environment variables to set, JSON encoded map of name => value.'
         default: '{}'
+      databases:
+        type: boolean
+        description: 'Enable database support for unit tests.'
       working-directory:
         type: string
         default: .
@@ -47,6 +50,19 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Run PHPUnit
+        env:
+          ICINGAWEB_TEST_MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+          ICINGAWEB_TEST_PGSQL_PORT: ${{ job.services.pgsql.ports['5432'] }}
+          MYSQL_TESTDB_HOST: 127.0.0.1
+          MYSQL_TESTDB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          MYSQL_TESTDB: icinga_unittest
+          MYSQL_TESTDB_USER: icinga_unittest
+          MYSQL_TESTDB_PASSWORD: icinga_unittest
+          PGSQL_TESTDB_HOST: 127.0.0.1
+          PGSQL_TESTDB_PORT: ${{ job.services.pgsql.ports['5432'] }}
+          PGSQL_TESTDB: icinga_unittest
+          PGSQL_TESTDB_USER: icinga_unittest
+          PGSQL_TESTDB_PASSWORD: icinga_unittest
         # Unlike linting and static analysis, which report errors via the GitHub Actions API and
         # therefore (have to) use relative paths, we can use working-directory here because
         # PHPUnit provides absolute paths and GitHub Actions problem matchers work with absolute paths.
@@ -92,3 +108,34 @@ jobs:
           fi
 
           echo "::endgroup::"
+    services:
+      mysql:
+        # Service will not be started if image is empty.
+        image: ${{ inputs.databases && 'mariadb' || '' }}
+        env:
+          MARIADB_RANDOM_ROOT_PASSWORD: yes
+          MARIADB_DATABASE: icinga_unittest
+          MARIADB_USER: icinga_unittest
+          MARIADB_PASSWORD: icinga_unittest
+        options: >-
+          --health-cmd "mariadb-admin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306/tcp
+
+      pgsql:
+        # Service will not be started if image is empty.
+        image: ${{ inputs.databases && 'postgres' || '' }}
+        env:
+          POSTGRES_DB: icinga_unittest
+          POSTGRES_USER: icinga_unittest
+          POSTGRES_PASSWORD: icinga_unittest
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432/tcp

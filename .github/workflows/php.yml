@@ -19,6 +19,9 @@ on:
         type: string
         description: 'Environment variables to set, JSON encoded map of name => value.'
         default: '{}'
+      databases:
+        type: boolean
+        description: 'Enable database support for unit tests.'
       working-directory:
         type: string
         default: .
@@ -52,6 +55,7 @@ jobs:
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
       env: ${{ inputs.env }}
+      databases: ${{ inputs.databases }}
       working-directory: ${{ inputs.working-directory }}
 
   stan:
