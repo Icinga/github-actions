@@ -15,6 +15,10 @@ on:
         type: string
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
         default: '{}'
+      env:
+        type: string
+        description: 'Environment variables to set, JSON encoded map of name => value.'
+        default: '{}'
       working-directory:
         type: string
         default: .
@@ -47,6 +51,7 @@ jobs:
       php-version: ${{ matrix.php }}
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
+      env: ${{ inputs.env }}
       working-directory: ${{ inputs.working-directory }}
 
   stan:
@@ -60,6 +65,7 @@ jobs:
       php-version: ${{ matrix.php }}
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
+      env: ${{ inputs.env }}
       working-directory: ${{ inputs.working-directory }}
       # GitHub does not yet support continue-on-error at the job level for jobs invoking reusable workflows
       # (see https://github.com/orgs/community/discussions/77915, for example).

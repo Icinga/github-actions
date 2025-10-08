@@ -1,6 +1,6 @@
 # This workflow runs PHP unit tests on the specified PHP version with optional PHP extensions.
 # It sets up PHP, installs code dependencies, and runs PHPUnit as a testing tool.
-# Additional dependencies can be cloned as specified in the inputs.
+# Additional dependencies/environment variables can be cloned/set as specified in the inputs.
 # The phpunit command uses a bootstrap file if the PHPUNIT_BOOTSTRAP environment variable is set.
 # PHPUnit problem matchers are added to improve error reporting in the workflow logs.
 
@@ -18,6 +18,10 @@ on:
         type: string
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
         default: '{}'
+      env:
+        type: string
+        description: 'Environment variables to set, JSON encoded map of name => value.'
+        default: '{}'
       working-directory:
         type: string
         default: .
@@ -33,8 +37,9 @@ jobs:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
           dependencies: ${{ inputs.dependencies }}
-          php-tools: phpunit:${{ inputs.phpunit-version }}
+          env: ${{ inputs.env }}
           working-directory: ${{ inputs.working-directory }}
+          php-tools: phpunit
 
       # Register the GitHub Actions problem matcher installed by shivammathur/setup-php.
       # https://github.com/shivammathur/setup-php/blob/2.36.0/src/configs/pm/phpunit.json

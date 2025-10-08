@@ -3,7 +3,7 @@
 # For PHP libraries, it installs dependencies via composer.
 # For Icinga Web modules, it clones required Icinga repositories, and
 # sets up environment variables for testing and static analysis.
-# Additional dependencies can be cloned as specified in the inputs.
+# Additional dependencies/environment variables can be cloned/set as specified in the inputs.
 # PHP problem matchers are added to improve error reporting in workflow logs.
 # The working directory is configurable to support different project layouts.
 
@@ -21,6 +21,10 @@ inputs:
   dependencies:
     type: string
     description: 'Dependencies to install, JSON encoded map of path => repository url.'
+    default: '{}'
+  env:
+    type: string
+    description: 'Environment variables to set, JSON encoded map of name => value.'
     default: '{}'
   working-directory:
     type: string
@@ -162,5 +166,15 @@ runs:
             run_cmd git clone -q --depth 1 -b "${branch}" "${url}" "${path}"
           fi
         done
+
+        echo "::endgroup::"
+
+    - name: Load environment variables
+      if: ${{ inputs.env != '{}' }}
+      shell: bash
+      run: |
+        echo "::group::Load environment variables"
+
+        echo '${{ inputs.env }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"' | tee -a $GITHUB_ENV
 
         echo "::endgroup::"

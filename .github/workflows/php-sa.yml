@@ -1,6 +1,6 @@
 # This workflow performs static PHP code analysis on the specified PHP version with optional PHP extensions.
 # It sets up PHP, installs code dependencies, and runs PHPStan as a static analysis tool.
-# Additional dependencies can be cloned as specified in the inputs.
+# Additional dependencies/environment variables can be cloned/set as specified in the inputs.
 # If a phpstan.neon file is present, scanDirectories are automatically adjusted to match the runtime environment;
 # otherwise, PHPStan analyzes all main directories except vendor.
 
@@ -17,6 +17,10 @@ on:
       dependencies:
         type: string
         description: 'Dependencies to install, JSON encoded map of path => repository url.'
+        default: '{}'
+      env:
+        type: string
+        description: 'Environment variables to set, JSON encoded map of name => value.'
         default: '{}'
       working-directory:
         type: string
@@ -37,6 +41,7 @@ jobs:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
           dependencies: ${{ inputs.dependencies }}
+          env: ${{ inputs.env }}
           working-directory: ${{ inputs.working-directory }}
           php-tools: phpstan
 
