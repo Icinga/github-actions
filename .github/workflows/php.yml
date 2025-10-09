@@ -22,6 +22,10 @@ on:
       databases:
         type: boolean
         description: 'Enable database support for unit tests.'
+      phpunit-version:
+        type: string
+        description: 'PHPUnit version to use.'
+        default: 'latest'
       working-directory:
         type: string
         default: .
@@ -56,6 +60,7 @@ jobs:
       dependencies: ${{ inputs.dependencies }}
       env: ${{ inputs.env }}
       databases: ${{ inputs.databases }}
+      phpunit-version: ${{ inputs.phpunit-version }}
       working-directory: ${{ inputs.working-directory }}
 
   stan:

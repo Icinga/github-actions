@@ -25,6 +25,10 @@ on:
       databases:
         type: boolean
         description: 'Enable database support for unit tests.'
+      phpunit-version:
+        type: string
+        description: 'PHPUnit version to use.'
+        default: 'latest'
       working-directory:
         type: string
         default: .
@@ -41,8 +45,8 @@ jobs:
           php-extensions: ${{ inputs.php-extensions }}
           dependencies: ${{ inputs.dependencies }}
           env: ${{ inputs.env }}
+          php-tools: phpunit:${{ inputs.phpunit-version }}
           working-directory: ${{ inputs.working-directory }}
-          php-tools: phpunit
 
       # Register the GitHub Actions problem matcher installed by shivammathur/setup-php.
       # https://github.com/shivammathur/setup-php/blob/2.36.0/src/configs/pm/phpunit.json
