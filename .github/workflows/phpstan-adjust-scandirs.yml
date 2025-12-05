@@ -1,0 +1,16 @@
+name: phpstan-adjust-scandirs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  php:
+    name: PHP
+    uses: ./.github/workflows/php.yml
+    with:
+      working-directory: ./phpstan-adjust-scandirs
