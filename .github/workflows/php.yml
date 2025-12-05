@@ -7,7 +7,7 @@ on:
       php-versions:
         type: string
         description: 'PHP versions to test against, JSON encoded array of strings.'
-        default: '["8.2", "8.3", "8.4"]'
+        default: '["8.2", "8.3", "8.4", "8.5"]'
       php-extensions:
         type: string
         description: 'PHP extensions to install, comma separated list of strings.'
