@@ -118,14 +118,17 @@ runs:
 
         run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php/ipl
         run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
-        set_env ICINGAWEB_LIBDIR ./vendor/icinga-php
+        ICINGAWEB_LIBDIR="./vendor/icinga-php"
+        set_env ICINGAWEB_LIBDIR "${ICINGAWEB_LIBDIR}"
 
         run_cmd mkdir -p ./vendor/tests/modules
         run_cmd ln -s "$(pwd)" ./vendor/tests/modules/$(awk 'BEGIN {IGNORECASE=1} /^Module:/ {m=tolower($2)} /^Name:/ && !m {m=tolower($2)} END {print m}' module.info)
-        set_env ICINGAWEB_MODULES_DIR ./vendor/icingaweb2/modules:./vendor/tests/modules
+        ICINGAWEB_MODULES_DIR="./vendor/icingaweb2/modules:./vendor/tests/modules"
+        set_env ICINGAWEB_MODULES_DIR "${ICINGAWEB_MODULES_DIR}"
 
-        scan_dirs=$(echo '${{ inputs.dependencies }}' | jq -r 'keys_unsorted | join(":")')
-        set_env PHPSTAN_SCANDIRS "./vendor:${scan_dirs}"
+        PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS}:${ICINGAWEB_LIBDIR}:${ICINGAWEB_MODULES_DIR}"
+        PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS#:}"
+        set_env PHPSTAN_SCANDIRS "${PHPSTAN_SCANDIRS}"
         # PHPStan follows symlinks without detecting recursive links,
         # so the module itself must be excluded to prevent infinite recursion.
         set_env PHPSTAN_EXCLUDE ./vendor/tests/modules
@@ -153,6 +156,13 @@ runs:
           "$@"
         }
 
+        set_env() {
+          local key="$1"
+          local value="$2"
+          echo "${key}=${value}"
+          echo "${key}=${value}" >> $GITHUB_ENV
+        }
+
         echo '${{ inputs.dependencies }}' | jq -r 'to_entries[] | "\(.key)\t\(.value)"' | while IFS=$'\t' read -r path url; do
           # Extract branch if exists
           branch="${url#*#}"
@@ -166,6 +176,11 @@ runs:
             run_cmd git clone -q --depth 1 -b "${branch}" "${url}" "${path}"
           fi
         done
+
+        scan_dirs=$(echo '${{ inputs.dependencies }}' | jq -r 'keys_unsorted | join(":")')
+        PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS}:${scan_dirs}"
+        PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS#:}"
+        set_env PHPSTAN_SCANDIRS "${PHPSTAN_SCANDIRS}"
 
         echo "::endgroup::"
 
