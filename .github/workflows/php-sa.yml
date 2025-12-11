@@ -22,6 +22,9 @@ on:
         type: string
         description: 'Environment variables to set, JSON encoded map of name => value.'
         default: '{}'
+      setup-commands:
+        description: 'Custom setup commands (one per line)'
+        type: string
       working-directory:
         type: string
         default: .
@@ -42,6 +45,7 @@ jobs:
           php-extensions: ${{ inputs.php-extensions }}
           dependencies: ${{ inputs.dependencies }}
           env: ${{ inputs.env }}
+          setup-commands: ${{ inputs.setup-commands }}
           working-directory: ${{ inputs.working-directory }}
           php-tools: phpstan
 

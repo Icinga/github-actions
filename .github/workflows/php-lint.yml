@@ -11,6 +11,9 @@ on:
         type: string
         required: true
         description: 'PHP version to test against.'
+      setup-commands:
+        description: 'Custom setup commands (one per line)'
+        type: string
       working-directory:
         type: string
         default: .
@@ -34,6 +37,12 @@ jobs:
       - name: Setup problem matchers for PHP
         shell: bash
         run: echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+
+      - name: Custom setup
+        if: inputs.setup-commands != ''
+        shell: bash
+        run: |
+          ${{ inputs.setup-commands }}
 
       - name: Run PHP Parallel Lint
         working-directory: ${{ inputs.working-directory }}

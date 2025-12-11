@@ -29,6 +29,9 @@ on:
         type: string
         description: 'PHPUnit version to use.'
         default: 'latest'
+      setup-commands:
+        description: 'Custom setup commands (one per line)'
+        type: string
       working-directory:
         type: string
         default: .
@@ -46,6 +49,7 @@ jobs:
           dependencies: ${{ inputs.dependencies }}
           env: ${{ inputs.env }}
           php-tools: phpunit:${{ inputs.phpunit-version }}
+          setup-commands: ${{ inputs.setup-commands }}
           working-directory: ${{ inputs.working-directory }}
 
       # Register the GitHub Actions problem matcher installed by shivammathur/setup-php.
