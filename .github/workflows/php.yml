@@ -26,6 +26,9 @@ on:
         type: string
         description: 'PHPUnit version to use.'
         default: 'latest'
+      setup-commands:
+        description: 'Custom setup commands (one per line)'
+        type: string
       working-directory:
         type: string
         default: .
@@ -45,6 +48,7 @@ jobs:
     uses: ./.github/workflows/php-lint.yml
     with:
       php-version: ${{ matrix.php }}
+      setup-commands: ${{ inputs.setup-commands }}
       working-directory: ${{ inputs.working-directory }}
 
   test:
@@ -61,6 +65,7 @@ jobs:
       env: ${{ inputs.env }}
       databases: ${{ inputs.databases }}
       phpunit-version: ${{ inputs.phpunit-version }}
+      setup-commands: ${{ inputs.setup-commands }}
       working-directory: ${{ inputs.working-directory }}
 
   stan:
@@ -75,6 +80,7 @@ jobs:
       php-extensions: ${{ inputs.php-extensions }}
       dependencies: ${{ inputs.dependencies }}
       env: ${{ inputs.env }}
+      setup-commands: ${{ inputs.setup-commands }}
       working-directory: ${{ inputs.working-directory }}
       # GitHub does not yet support continue-on-error at the job level for jobs invoking reusable workflows
       # (see https://github.com/orgs/community/discussions/77915, for example).
