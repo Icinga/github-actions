@@ -114,22 +114,22 @@ runs:
           echo "${key}=${value}" >> $GITHUB_ENV
         }
 
-        run_cmd git clone -q --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
-        run_cmd composer install -d vendor/icingaweb2 --no-progress
-        # TODO(el): set_env PHPUNIT_BOOTSTRAP "$(composer config vendor-dir)/icingaweb2/test/php/bootstrap.php"
-        set_env PHPUNIT_BOOTSTRAP ./vendor/icingaweb2/test/php/bootstrap.php
+        ICINGAWEB_BASE_DIR="./vendor/icingaweb2"
+        run_cmd git clone -q --depth 1 https://github.com/Icinga/icingaweb2.git "${ICINGAWEB_BASE_DIR}"
+        run_cmd composer install -d "${ICINGAWEB_BASE_DIR}" --no-progress
+        set_env PHPUNIT_BOOTSTRAP "${ICINGAWEB_BASE_DIR}/test/php/bootstrap.php"
 
-        run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php/ipl
-        run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git vendor/icinga-php/vendor
         ICINGAWEB_LIBDIR="./vendor/icinga-php"
+        run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git "${ICINGAWEB_LIBDIR}/ipl"
+        run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-thirdparty.git "${ICINGAWEB_LIBDIR}/vendor"
         set_env ICINGAWEB_LIBDIR "${ICINGAWEB_LIBDIR}"
 
         run_cmd mkdir -p ./vendor/tests/modules
         run_cmd ln -s "$(pwd)" ./vendor/tests/modules/$(awk 'BEGIN {IGNORECASE=1} /^Module:/ {m=tolower($2)} /^Name:/ && !m {m=tolower($2)} END {print m}' module.info)
-        ICINGAWEB_MODULES_DIR="./vendor/icingaweb2/modules:./vendor/tests/modules"
+        ICINGAWEB_MODULES_DIR="${ICINGAWEB_BASE_DIR}/modules:./vendor/tests/modules"
         set_env ICINGAWEB_MODULES_DIR "${ICINGAWEB_MODULES_DIR}"
 
-        PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS}:${ICINGAWEB_LIBDIR}:${ICINGAWEB_MODULES_DIR}"
+        PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS}:${ICINGAWEB_BASE_DIR}:${ICINGAWEB_LIBDIR}"
         PHPSTAN_SCANDIRS="${PHPSTAN_SCANDIRS#:}"
         set_env PHPSTAN_SCANDIRS "${PHPSTAN_SCANDIRS}"
         # PHPStan follows symlinks without detecting recursive links,
