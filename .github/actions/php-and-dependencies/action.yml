@@ -116,7 +116,6 @@ runs:
 
         run_cmd git clone -q --depth 1 https://github.com/Icinga/icingaweb2.git vendor/icingaweb2
         run_cmd composer install -d vendor/icingaweb2 --no-progress
-        # TODO(el): set_env PHPUNIT_BOOTSTRAP "$(composer config vendor-dir)/icingaweb2/test/php/bootstrap.php"
         set_env PHPUNIT_BOOTSTRAP ./vendor/icingaweb2/test/php/bootstrap.php
 
         run_cmd git clone -q --depth 1 -b snapshot/nightly https://github.com/Icinga/icinga-php-library.git vendor/icinga-php/ipl
