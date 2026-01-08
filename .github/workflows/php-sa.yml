@@ -22,6 +22,9 @@ on:
         type: string
         description: 'Environment variables to set, JSON encoded map of name => value.'
         default: '{}'
+      level:
+        type: string
+        description: 'PHPStan analysis level.'
       setup-commands:
         description: 'Custom setup commands (one per line)'
         type: string
@@ -35,7 +38,7 @@ on:
 
 jobs:
   phpstan:
-    name: PHPStan ${{ inputs.php-version }}
+    name: PHPStan${{ inputs.level != '' && format('#{0}', inputs.level) || '' }} ${{ inputs.php-version }}
     runs-on: ubuntu-latest
     steps:
       - name: Setup PHP and dependencies
@@ -89,7 +92,11 @@ jobs:
             composer_vendor="$(composer -d ${{ inputs.working-directory }} config vendor-dir)"
             autoload_file="${{ inputs.working-directory }}/${composer_vendor}/autoload.php"
 
-            args=(--level 6 -a "${autoload_file}" "${dirs[@]}" "${php_files[@]}")
+            args=(-a "${autoload_file}" "${dirs[@]}" "${php_files[@]}")
+          fi
+
+          if [ -n "${{ inputs.level }}" ]; then
+            args+=(-l "${{ inputs.level }}")
           fi
 
           log_cmd phpstan analyse "${args[@]}"

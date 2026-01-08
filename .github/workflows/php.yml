@@ -22,6 +22,10 @@ on:
       databases:
         type: boolean
         description: 'Enable database support for unit tests.'
+      phpstan-min-level:
+        type: string
+        description: 'Minimum level for PHPStan to report errors.'
+        default: '6'
       phpunit-version:
         type: string
         description: 'PHPUnit version to use.'
@@ -65,6 +69,22 @@ jobs:
       env: ${{ inputs.env }}
       databases: ${{ inputs.databases }}
       phpunit-version: ${{ inputs.phpunit-version }}
+      setup-commands: ${{ inputs.setup-commands }}
+      working-directory: ${{ inputs.working-directory }}
+
+  stan-min:
+    name: Static analysis
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJson(inputs.php-versions) }}
+    uses: ./.github/workflows/php-sa.yml
+    with:
+      php-version: ${{ matrix.php }}
+      php-extensions: ${{ inputs.php-extensions }}
+      dependencies: ${{ inputs.dependencies }}
+      env: ${{ inputs.env }}
+      level: ${{ inputs.phpstan-min-level }}
       setup-commands: ${{ inputs.setup-commands }}
       working-directory: ${{ inputs.working-directory }}
 
