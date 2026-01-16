@@ -40,22 +40,22 @@ jobs:
   test:
     name: PHPUnit ${{ inputs.php-version }}
     runs-on: ubuntu-latest
-    env:
-      ICINGAWEB_TEST_MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
-      ICINGAWEB_TEST_PGSQL_PORT: ${{ job.services.pgsql.ports['5432'] }}
-      MYSQL_TESTDB_HOST: 127.0.0.1
-      MYSQL_TESTDB_PORT: ${{ job.services.mysql.ports['3306'] }}
-      MYSQL_TESTDB: icinga_unittest
-      MYSQL_TESTDB_USER: icinga_unittest
-      MYSQL_TESTDB_PASSWORD: icinga_unittest
-      PGSQL_TESTDB_HOST: 127.0.0.1
-      PGSQL_TESTDB_PORT: ${{ job.services.pgsql.ports['5432'] }}
-      PGSQL_TESTDB: icinga_unittest
-      PGSQL_TESTDB_USER: icinga_unittest
-      PGSQL_TESTDB_PASSWORD: icinga_unittest
     steps:
       - uses: Icinga/github-actions/.github/actions/php-and-dependencies@main
         name: Setup PHP and dependencies
+        env:
+          ICINGAWEB_TEST_MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+          ICINGAWEB_TEST_PGSQL_PORT: ${{ job.services.pgsql.ports['5432'] }}
+          MYSQL_TESTDB_HOST: 127.0.0.1
+          MYSQL_TESTDB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          MYSQL_TESTDB: icinga_unittest
+          MYSQL_TESTDB_USER: icinga_unittest
+          MYSQL_TESTDB_PASSWORD: icinga_unittest
+          PGSQL_TESTDB_HOST: 127.0.0.1
+          PGSQL_TESTDB_PORT: ${{ job.services.pgsql.ports['5432'] }}
+          PGSQL_TESTDB: icinga_unittest
+          PGSQL_TESTDB_USER: icinga_unittest
+          PGSQL_TESTDB_PASSWORD: icinga_unittest
         with:
           php-version: ${{ inputs.php-version }}
           php-extensions: ${{ inputs.php-extensions }}
@@ -71,6 +71,19 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Run PHPUnit
+        env:
+          ICINGAWEB_TEST_MYSQL_PORT: ${{ job.services.mysql.ports['3306'] }}
+          ICINGAWEB_TEST_PGSQL_PORT: ${{ job.services.pgsql.ports['5432'] }}
+          MYSQL_TESTDB_HOST: 127.0.0.1
+          MYSQL_TESTDB_PORT: ${{ job.services.mysql.ports['3306'] }}
+          MYSQL_TESTDB: icinga_unittest
+          MYSQL_TESTDB_USER: icinga_unittest
+          MYSQL_TESTDB_PASSWORD: icinga_unittest
+          PGSQL_TESTDB_HOST: 127.0.0.1
+          PGSQL_TESTDB_PORT: ${{ job.services.pgsql.ports['5432'] }}
+          PGSQL_TESTDB: icinga_unittest
+          PGSQL_TESTDB_USER: icinga_unittest
+          PGSQL_TESTDB_PASSWORD: icinga_unittest
         # Unlike linting and static analysis, which report errors via the GitHub Actions API and
         # therefore (have to) use relative paths, we can use working-directory here because
         # PHPUnit provides absolute paths and GitHub Actions problem matchers work with absolute paths.
