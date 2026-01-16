@@ -122,10 +122,10 @@ jobs:
         # Service will not be started if image is empty.
         image: ${{ inputs.databases && 'mariadb' || '' }}
         env:
-          MARIADB_RANDOM_ROOT_PASSWORD: yes
           MARIADB_DATABASE: icinga_unittest
           MARIADB_USER: icinga_unittest
           MARIADB_PASSWORD: icinga_unittest
+          MARIADB_ROOT_PASSWORD: icinga_unittest
         options: >-
           --health-cmd "mariadb-admin ping"
           --health-interval 10s
