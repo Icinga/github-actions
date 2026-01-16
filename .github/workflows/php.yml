@@ -36,7 +36,7 @@ on:
       working-directory:
         type: string
         default: .
-    workflow_dispatch:
+  workflow_dispatch:
 
 # Prevent multiple runs of the same workflow from overlapping on the same branch/PR.
 concurrency:
