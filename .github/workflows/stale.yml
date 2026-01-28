@@ -29,7 +29,7 @@ permissions:
 
 jobs:
   stale:
-    name: Close stale issues
+    name: Close issues
     runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v10
