@@ -1,0 +1,82 @@
+# This workflow automatically closes inactive issues after a configurable period.
+# Issues are marked with the `stale` label upon closing.
+#
+# Reopening closed issues:
+#   Manually reopen the issue and remove the `stale` label to prevent reprocessing.
+#
+# Exceptions:
+#   - Pull requests are never affected by this workflow
+#   - Issues with milestones are never closed
+#   - Issues with an assignee are never closed
+#   - Issues with labels `ref/IP` or `ref/NC` are never closed
+
+on:
+  workflow_call:
+    inputs:
+      inactive-days:
+        type: number
+        description: 'Days of inactivity before closing issues as stale (based on last update)'
+        default: 1825 # 5 years
+      dry-run:
+        type: boolean
+        description: 'Enable to log actions only, without modifying issues'
+
+permissions:
+  # As of version v10.1.1, `actions/stale` uses the GitHub Actions Cache to maintain state.
+  # For conflict resolution the action deletes the existing cache, which requires the `actions: write` permission.
+  actions: write
+  issues: write # Required to label and close issues
+
+jobs:
+  stale:
+    name: Close issues
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v10
+        with:
+          # Exclude pull requests from this workflow.
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+
+          close-issue-message: |
+            This issue has been automatically closed due to age/inactivity.
+            If still relevant with current versions, feel free to create a new issue with updated details.
+
+          stale-issue-label: stale
+
+          # List of labels to exclude.
+          exempt-issue-labels: 'ref/IP, ref/NC'
+
+          # Exclude issues with a milestone.
+          exempt-all-issue-milestones: true
+
+          # Exclude issues with an assignee.
+          exempt-all-issue-assignees: true
+
+          # Idle number of days before marking issues as stale (based on GitHub issue field `updated_at`).
+          days-before-issue-stale: ${{ inputs.inactive-days }}
+
+          # Close issues immediately after being marked stale.
+          days-before-issue-close: 0
+
+          # Attempts to close ~5 issues per run (26 operations: 1 for fetching + 25 ÷ 5 per issue).
+          # Fetching issues in batches of 100 consumes 1 operation per batch.
+          # As of v10.1.1, issues are processed sequentially with up to 5 operations each:
+          #   1. Apply `stale-issue-label` when considered stale
+          #      (skipped if already labeled)
+          #   2. Fetch stale label creation date
+          #      (even if label was just applied in this run)
+          #   3. Fetch comments since stale label was applied to potentially un-stale
+          #      (irrelevant in our case as we aim to stale and close in one go)
+          #   4. Post close comment
+          #      (if `days-before-issue-close` elapsed; 0 in our case, issues closed immediately)
+          #   5. Close the issue
+          #      (surprisingly separate from posting the comment)
+          operations-per-run: 26
+
+          # Process least-recently updated issues first.
+          sort-by: updated
+          ascending: true
+
+          # Whether to only simulate the labeling and closing process.
+          debug-only: ${{ inputs.dry-run }}
