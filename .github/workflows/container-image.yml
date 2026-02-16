@@ -3,7 +3,10 @@
 # builds, and builds the container images using the Containerfile. For all non-pull request events that
 # trigger this workflow, it logs into GHCR and Docker Hub using credentials from the workflow call inputs,
 # tags and pushes the images to both registries, and generates and pushes signed build provenance attestations
-# to each registry. For pull request events, it just builds the images but does not push them to the registries.
+# to each registry. Additionally, when a building and publishing the latest tag, it syncs the README file
+# determined by the container_readme_filepath input (or the For-Container.md file found in the ./doc/ directory
+# if not provided) with Docker Hub. For pull request events, it just builds the images but does not push them
+# to the registries.
 
 name: Container Image
 
@@ -18,6 +21,10 @@ on:
         required: true
         type: string
         description: 'URL to the Icinga documentation for this project.'
+      container_readme_filepath:
+        required: false
+        type: string
+        description: 'Path to the README file to sync with Docker Hub. Defaults to the For-Container.md file in the ./doc/ directory.'
     # We do not need to require the secrets.GITHUB_TOKEN here because it is automatically
     # inherited from the workflow call [^1].
     #
@@ -45,6 +52,10 @@ env:
   # The LATEST_MAJOR variable determines if the current release tag is the greatest within its major version.
   # If true, the container image will be tagged with the major version (e.g., '1') when pushed to the registries.
   LATEST_MAJOR: false
+
+  # The path to the README file to sync with Docker Hub. If not provided, it defaults to
+  # the For-Container.md file found in the ./doc/ directory.
+  README_FILEPATH: ${{ inputs.container_readme_filepath }}
 
 jobs:
   build-and-publish:
@@ -177,3 +188,41 @@ jobs:
           subject-name: index.docker.io/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build-and-push.outputs.digest }}
           push-to-registry: false
+
+      - name: Prepare For-Container.md file
+        if: ${{ env.LATEST == 'true' }}
+        run: |
+          if [ -z "${{ env.README_FILEPATH }}" ]; then
+            files=$(find ./doc -type f -name 'For-Container.md')
+            if [ -z "$files" ]; then
+              echo "No For-Container.md file found in the ./doc/ directory."
+              exit 1
+            fi
+            # Must be a single file, otherwise exit with error.
+            if [ $(echo "$files" | wc -l) -ne 1 ]; then
+              echo "Multiple For-Container.md files found in the ./doc/ directory. Please specify a single file using the container_readme_filepath input."
+              echo "$files"
+              exit 1
+            fi
+
+            file_path=$(echo "$files" | head -n 1)
+            echo "No custom container README file path provided. Using default path: $file_path"
+            echo "README_FILEPATH=$file_path" >> "$GITHUB_ENV"
+          else
+            # Check if the provided file exists.
+            if [ -f "${{ env.README_FILEPATH }}" ]; then
+              echo "Using provided container README file path: ${{ env.README_FILEPATH }}"
+            else
+              echo "Provided container README file path does not exist: ${{ env.README_FILEPATH }}"
+              exit 1
+            fi
+          fi
+
+      - name: Sync For-Container.md
+        uses: ms-jpq/sync-dockerhub-readme@e2991ea1ba48832e73555cdbd5b82f5a2e91ee9b # v1
+        if: ${{ env.LATEST == 'true' }}
+        with:
+          username: ${{ secrets.dockerhub_username }}
+          password: ${{ secrets.dockerhub_token }}
+          repository: ${{ env.IMAGE_NAME }}
+          readme: ${{ env.README_FILEPATH }}
