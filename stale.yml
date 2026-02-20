@@ -1,0 +1,11 @@
+name: stale action
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  stale:
+    uses: icinga/github-actions/.github/workflows/stale.yml@main
+    secrets: inherit
