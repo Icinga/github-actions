@@ -29,7 +29,7 @@ Options:
   --exclude Directories to exclude from analysis, separated by PATH_SEPARATOR (optional)
   --inplace Update phpstan.neon configuration file in-place (default: output to stdout)
 
-This script merges provided scan and exclude directories with the existing config,
+This script merges provided scan and exclude directories with any existing config,
 validates directory readability, removes nested directories to keep only the highest-level,
 and outputs the updated NEON config or writes it in-place.
 
@@ -66,14 +66,15 @@ foreach ($scanDirs as $dir) {
     $diff[] = "+ $dir";
 }
 
-try {
-    $config = Neon::decodeFile($configFile);
-    if ($config === null) {
-        throw new Exception("Config is empty");
+if (is_file($configFile)) {
+    try {
+        $config = Neon::decodeFile($configFile) ?? [];
+    } catch (Throwable $e) {
+        fwrite(STDERR, "Error: Failed to decode NEON config: " . $e->getMessage() . "\n");
+        exit(1);
     }
-} catch (Throwable $e) {
-    fwrite(STDERR, "Error: Failed to decode NEON config: " . $e->getMessage() . "\n");
-    exit(1);
+} else {
+    $config = [];
 }
 
 foreach ((array) ($config['parameters']['scanDirectories'] ?? []) as $existing) {
