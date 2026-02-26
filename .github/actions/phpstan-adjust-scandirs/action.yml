@@ -59,6 +59,19 @@ runs:
           printf "${NC}\n"
         }
 
+        set_env() {
+          local key="$1"
+          local value="$2"
+          echo "${key}=${value}"
+          echo "${key}=${value}" >> $GITHUB_ENV
+        }
+
+        if [ ! -f phpstan.neon ]; then
+          # Mark phpstan.neon config as generated (missing level and scan paths)
+          # so that the `php-sa` workflow supplies these parameters through CLI arguments.
+          set_env PHPSTAN_CONFIG_GENERATED 1
+        fi
+
         log_cmd phpstan-adjust-scandirs.php \
           --config=phpstan.neon --scan="${PHPSTAN_SCANDIRS}" --exclude="${PHPSTAN_EXCLUDE}" --inplace
         ./phpstan-adjust-scandirs/phpstan-adjust-scandirs/phpstan-adjust-scandirs.php \

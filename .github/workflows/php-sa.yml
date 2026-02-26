@@ -50,7 +50,7 @@ jobs:
           php-tools: phpstan
 
       - name: Adjust PHPStan scanDirectories
-        if: ${{ hashFiles(format('{0}/{1}', inputs.working-directory, 'phpstan.neon')) != '' && env.PHPSTAN_SCANDIRS != ''}}
+        if: ${{ env.PHPSTAN_SCANDIRS != ''}}
         uses: Icinga/github-actions/.github/actions/phpstan-adjust-scandirs@main
         with:
           working-directory: ${{ inputs.working-directory }}
@@ -71,16 +71,27 @@ jobs:
             printf "${NC}\n"
           }
 
-          if [ -f "${{ inputs.working-directory }}/phpstan.neon" ]; then
-            args=(--configuration "${{ inputs.working-directory }}/phpstan.neon")
-          else
-            # Find all direct child directories, excluding vendor and hidden dirs
-            dirs=($(find "${{ inputs.working-directory }}" -mindepth 1 -maxdepth 1 \
-              -type d \
-              -not -path "${{ inputs.working-directory }}/vendor" \
-              -not -path "${{ inputs.working-directory }}/.*"))
+          args=()
 
-            # Find all direct child PHP files
+          configuration=""
+          if [ -f "${{ inputs.working-directory }}/phpstan.neon" ]; then
+            configuration="${{ inputs.working-directory }}/phpstan.neon"
+          fi;
+
+          # Supply level and scan paths as CLI arguments if PHPStan config is missing or generated.
+          if [ -z "$configuration" ] || [ -n "$PHPSTAN_CONFIG_GENERATED" ]; then
+            # Find all direct child directories containing PHP files; exclude vendor dirs.
+            php_dirs=()
+            while IFS= read -r -d '' dir; do
+              if [[ -n $(find "$dir" -type f -name "*.php" -print -quit) ]]; then
+                php_dirs+=("$dir")
+              fi
+            done < <(find "${{ inputs.working-directory }}" -mindepth 1 -maxdepth 1 \
+              -type d \
+              -not -name "vendor" \
+              -print0)
+
+            # Find all direct child PHP files.
             php_files=($(find "${{ inputs.working-directory }}" -mindepth 1 -maxdepth 1 \
               -type f -name '*.php'))
 
@@ -92,11 +103,22 @@ jobs:
               composer_vendor="$(composer -d ${{ inputs.working-directory }} config vendor-dir)"
               autoload="${{ inputs.working-directory }}/${composer_vendor}/autoload.php"
             fi
+
             args=(--level=6)
             if [ -n "$autoload" ]; then
               args+=(-a "$autoload")
             fi
-            args+=("${dirs[@]}" "${php_files[@]}")
+            args+=("${php_dirs[@]}" "${php_files[@]}")
+          fi
+
+          if [ -n "$configuration" ]; then
+            array_unshift() {
+              local -n arr="$1"
+              shift
+              arr=("$@" "${arr[@]}")
+            }
+
+            array_unshift args --configuration "$configuration"
           fi
 
           log_cmd phpstan analyse "${args[@]}"
