@@ -85,11 +85,18 @@ jobs:
               -type f -name '*.php'))
 
             # Surprisingly, PHPStan does not seem to find composer.json when using a custom working directory.
-            # Therefore, we will simply pass the Composer autoloader explicitly.
-            composer_vendor="$(composer -d ${{ inputs.working-directory }} config vendor-dir)"
-            autoload_file="${{ inputs.working-directory }}/${composer_vendor}/autoload.php"
-
-            args=(--level 6 -a "${autoload_file}" "${dirs[@]}" "${php_files[@]}")
+            # Therefore, we will simply pass the Composer autoloader explicitly, if applicable.
+            autoload=""
+            composer_json="${{ inputs.working-directory }}/composer.json"
+            if [ -f "$composer_json" ]; then
+              composer_vendor="$(composer -d ${{ inputs.working-directory }} config vendor-dir)"
+              autoload="${{ inputs.working-directory }}/${composer_vendor}/autoload.php"
+            fi
+            args=(--level=6)
+            if [ -n "$autoload" ]; then
+              args+=(-a "$autoload")
+            fi
+            args+=("${dirs[@]}" "${php_files[@]}")
           fi
 
           log_cmd phpstan analyse "${args[@]}"
