@@ -1,0 +1,51 @@
+# This workflow validates the AUTHORS file against the commit authors introduced by a pull request.
+# It must be triggered on the `pull_request` event, as it relies on the synthetic merge commit
+# GitHub checks out for that event (HEAD^1 = base, HEAD^2 = PR head) to determine the new commits.
+# New, non-bot authors found in those commits are appended to AUTHORS; if that produces a diff,
+# the job fails and prints the diff so the AUTHORS file (or .mailmap) can be updated accordingly.
+# The calling repository must have an AUTHORS file for this to work.
+
+name: Authors file
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  authors:
+    name: AUTHORS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate AUTHORS
+        shell: bash
+        run: |
+          set -exo pipefail
+
+          sort -uo AUTHORS AUTHORS
+          git add AUTHORS
+
+          git log --format='format:%aN <%aE>' "$(
+            git merge-base HEAD^1 HEAD^2
+          )..HEAD^2" | sed -E '/^(dependabot|github-actions)\[bot] /d' >> AUTHORS
+
+          sort -uo AUTHORS AUTHORS
+          git diff AUTHORS >> AUTHORS.diff
+
+          if [ -s AUTHORS.diff ]; then
+            cat <<'EOF' >&2
+          There are the following new authors. If the commit author data is correct,
+          either add them to the AUTHORS file or update .mailmap. See gitmailmap(5) or:
+          https://git-scm.com/docs/gitmailmap
+          Don't hesitate to ask us for help if necessary.
+          EOF
+
+            cat AUTHORS.diff
+            exit 1
+          fi
