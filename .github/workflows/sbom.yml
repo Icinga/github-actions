@@ -1,0 +1,73 @@
+on:
+  workflow_call:
+    inputs:
+      select-catalogers:
+        description: 'Comma-separated syft cataloger selection, passed as --select-catalogers.'
+        type: string
+        default: '+sbom-cataloger'
+      exclude:
+        description: 'Comma-separated excluded paths from syft, passed as --exclude.'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+
+    env:
+      SYFT_ENRICH: all
+      SYFT_EXCLUDE: ${{ inputs.exclude }}
+      SYFT_SELECT_CATALOGERS: ${{ inputs.select-catalogers }}
+      SYFT_SOURCE_NAME: github.com/${{ github.repository }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: head
+          persist-credentials: false
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        env:
+          SYFT_SOURCE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+        with:
+          path: head
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          artifact-name: sbom.cdx.json
+          upload-release-assets: false
+
+      - name: Checkout base
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Generate base SBOM
+        if: github.event_name == 'pull_request'
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        env:
+          SYFT_SOURCE_VERSION: ${{ github.event.pull_request.base.sha }}
+        with:
+          path: base
+          format: cyclonedx-json
+          output-file: sbom-base.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Compare SBOMs
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          purls() { jq -r '.components[]?.purl // empty' "$1" | sort -u; }
+          purls sbom-base.cdx.json > "$RUNNER_TEMP/base.txt"
+          purls sbom.cdx.json > "$RUNNER_TEMP/head.txt"
+          comm -3 "$RUNNER_TEMP/base.txt" "$RUNNER_TEMP/head.txt" | sed \
+            -e 's/^\t/::warning title=SBOM changed::Added /;t' \
+            -e 's/^/::warning title=SBOM changed::Removed /'
