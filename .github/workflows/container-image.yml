@@ -172,6 +172,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
+          sbom: true
           # The tags generated in the metadata step include tags for both Docker Hub and GHCR image names,
           # allowing the build and push action to build and push images to both registries.
           tags: ${{ steps.meta.outputs.tags }}
