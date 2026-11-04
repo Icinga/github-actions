@@ -1,10 +1,5 @@
 on:
   workflow_call:
-    inputs:
-      allowed_licenses:
-        type: string
-        required: true
-        description: 'Comma-separated list of allowed SPDX License Identifiers'
 
 permissions:
   contents: read
@@ -30,10 +25,30 @@ jobs:
       - name: Install go-licenses
         run: go install github.com/google/go-licenses@latest
 
-      - name: Check licenses against allow list
-        env:
-          ALLOWED_LICENSES: ${{ inputs.allowed_licenses }}
+      - name: Check licenses
         run: |
+          GO_MODULE="$(sed -n 's/^module \(.*\)$/\1/gp' go.mod)"
+          LICENSE="$(go-licenses csv "${GO_MODULE}/..." | awk -v GO_MODULE="$GO_MODULE" -F, '$1 == GO_MODULE { print $NF }')"
+
+          echo "Detected license of $GO_MODULE: $LICENSE"
+
+          case "$LICENSE" in
+          AGPL-3.0)
+            ALLOWED_LICENSES="AGPL-3.0,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0"
+            ;;
+          GPL-2.0)
+            ALLOWED_LICENSES="BSD-2-Clause,BSD-3-Clause,GPL-2.0,ISC,MIT,MPL-2.0,Unlicense"
+            ;;
+          MIT)
+            ALLOWED_LICENSES="BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0"
+            ;;
+          *)
+            echo "Unsupported license $LICENSE"
+            exit 1
+          esac
+
+          echo "Allowed licenses: $ALLOWED_LICENSES"
+
           go-licenses check \
-            "$(sed -n 's/^module \(.*\)$/\1/gp' go.mod)/..." \
+            "${GO_MODULE}/..." \
             --allowed_licenses "$ALLOWED_LICENSES"
