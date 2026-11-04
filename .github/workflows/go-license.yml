@@ -1,0 +1,39 @@
+on:
+  workflow_call:
+    inputs:
+      allowed_licenses:
+        type: string
+        required: true
+        description: 'Comma-separated list of allowed SPDX License Identifiers'
+
+permissions:
+  contents: read
+
+jobs:
+  go-license:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: '1'
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Download modules to local cache
+        run: go mod download
+
+      - name: Install go-licenses
+        run: go install github.com/google/go-licenses@latest
+
+      - name: Check licenses against allow list
+        env:
+          ALLOWED_LICENSES: ${{ inputs.allowed_licenses }}
+        run: |
+          go-licenses check \
+            "$(sed -n 's/^module \(.*\)$/\1/gp' go.mod)/..." \
+            --allowed_licenses "$ALLOWED_LICENSES"
