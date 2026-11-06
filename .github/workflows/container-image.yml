@@ -1,13 +1,16 @@
-# The Build and Publish Container Image workflow builds container images and pushes them to both
-# GitHub Container Registry (GHCR) and Docker Hub. It sets up QEMU conditionally based on the skip_qemu input,
-# and Docker Buildx for cross-platform builds, and builds the container images using the Containerfile.
+# The Build and Publish Container Image workflow builds container images and pushes them to the
+# GitHub Container Registry (GHCR) and, optionally, to Docker Hub. It sets up QEMU conditionally based on the
+# skip_qemu input, and Docker Buildx for cross-platform builds, and builds the container images using the Containerfile.
 #
-# For all non-pull request events that trigger this workflow, it logs into GHCR and Docker Hub using credentials
-# from the workflow call inputs, tags and pushes the images to both registries, and generates and pushes signed
-# build provenance attestations to each registry. Additionally, when a building and publishing the latest tag,
+# For all non-pull request events that trigger this workflow, it logs into GHCR and, if enabled, Docker Hub using
+# credentials from the workflow call inputs, tags and pushes the images to these registries, and generates and pushes
+# signed build provenance attestations to each registry. Additionally, when building and publishing the latest tag,
 # it syncs the README file determined by the container_readme_filepath input (or the For-Container.md file found
-# in the ./doc/ directory if not provided) with Docker Hub. For pull request events, it just builds the images but
-# does not push them to the registries.
+# in the ./doc/ directory if not provided) with Docker Hub, if enabled. For pull request events, it just builds the
+# images but does not push them to the registries.
+#
+# All Docker Hub related steps are skipped if the dockerhub_username secret is not given. In this case, the images
+# are only pushed to GHCR.
 
 name: Container Image
 
@@ -37,11 +40,11 @@ on:
     # [^1]: https://docs.github.com/en/actions/reference/workflows-and-actions/reusable-workflows#github-context
     secrets:
       dockerhub_username:
-        required: true
-        description: 'Username for Docker Hub.'
+        required: false
+        description: 'Username for Docker Hub. If not given, all Docker Hub steps are skipped.'
       dockerhub_token:
-        required: true
-        description: 'Personal access token for Docker Hub.'
+        required: false
+        description: 'Personal access token for Docker Hub. Required if dockerhub_username is given.'
 
 env:
   # If we did not receive a custom image name from the workflow call inputs, we use the repository name prefixed
@@ -62,6 +65,10 @@ env:
   # The path to the README file to sync with Docker Hub. If not provided, it defaults to
   # the For-Container.md file found in the ./doc/ directory.
   README_FILEPATH: ${{ inputs.container_readme_filepath }}
+
+  # Docker Hub publishing is only enabled if a Docker Hub username was passed. Since the secrets context is not
+  # available in step if conditions, this evaluates to the string 'true' or 'false'.
+  DOCKERHUB_ENABLED: ${{ secrets.dockerhub_username != '' }}
 
 jobs:
   build-and-publish:
@@ -121,12 +128,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          # This will generate tags and labels for both the GHCR image and Docker Hub image.
+          # This will generate tags and labels for both the GHCR image and, if enabled, the Docker Hub image.
           images: |
             # GitHub Container Registry
             ghcr.io/${{ env.IMAGE_NAME }}
             # Docker Hub
-            docker.io/${{ env.IMAGE_NAME }}
+            name=docker.io/${{ env.IMAGE_NAME }},enable=${{ env.DOCKERHUB_ENABLED }}
           labels: |
             org.opencontainers.image.documentation=${{ inputs.documentation_url }}
             org.opencontainers.image.vendor=Icinga GmbH
@@ -157,7 +164,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && env.DOCKERHUB_ENABLED == 'true'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.dockerhub_username }}
@@ -185,7 +192,7 @@ jobs:
           push-to-registry: false
 
       - name: Generate artifact attestation for Docker Hub
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && env.DOCKERHUB_ENABLED == 'true'
         uses: actions/attest-build-provenance@v4
         with:
           # According to the documentation [^1],
@@ -197,7 +204,7 @@ jobs:
           push-to-registry: false
 
       - name: Prepare For-Container.md file
-        if: ${{ env.LATEST == 'true' }}
+        if: ${{ env.LATEST == 'true' && env.DOCKERHUB_ENABLED == 'true' }}
         run: |
           if [ -z "${{ env.README_FILEPATH }}" ]; then
             files=$(find ./doc -type f -name 'For-Container.md')
@@ -227,7 +234,7 @@ jobs:
 
       - name: Sync For-Container.md
         uses: ms-jpq/sync-dockerhub-readme@e2991ea1ba48832e73555cdbd5b82f5a2e91ee9b # v1
-        if: ${{ env.LATEST == 'true' }}
+        if: ${{ env.LATEST == 'true' && env.DOCKERHUB_ENABLED == 'true' }}
         with:
           username: ${{ secrets.dockerhub_username }}
           password: ${{ secrets.dockerhub_token }}
